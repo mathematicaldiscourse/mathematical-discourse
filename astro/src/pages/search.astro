@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SearchIsland from '../components/SearchIsland.svelte';
+import { fetchSearchIndex } from '../lib/wordpress';
+
+export const prerender = true;
+
+// Provide the index at build time so the island renders immediately — no
+// client-side fetch and no "Loading" gate that can get stuck on soft navigation.
+const entries = await fetchSearchIndex();
+---
+
+<BaseLayout title="Search">
+  <PageHero title="Search" />
+
+  <noscript>
+    <p><em>Search requires JavaScript to be enabled.</em></p>
+  </noscript>
+
+  <SearchIsland client:load entries={entries} />
+</BaseLayout>

@@ -1,0 +1,37 @@
+---
+import TalkItem from './TalkItem.astro';
+import IssueMeta from './IssueMeta.astro';
+
+interface Props {
+  issue: any;
+  talks: any[];
+  issueSlug: string;
+}
+
+const { issue, talks, issueSlug } = Astro.props;
+---
+
+<div class="pt-8 md:pt-10 lg:pt-12">
+  <IssueMeta
+    issueNumber={issue.acf.issue_number}
+    volumeNumber={issue.acf.volume_number}
+    publicationDate={issue.acf.publication_date}
+    issueColor={issue.acf.issue_color}
+    summary={issue.acf.issue_summary}
+  />
+</div>
+
+{talks.map((talk: any) => (
+  <TalkItem
+    title={talk.acf.talk_title_latex}
+    slug={talk.slug}
+    issueSlug={issueSlug}
+    speakers={talk.acf.speakers}
+    subjectAreas={talk.subject_areas}
+    issueColor={issue.acf.issue_color}
+    talkDate={talk.acf.talk_date}
+    hostInstitution={talk.acf.host_institution}
+    duration={talk.acf.video_duration}
+    compact
+  />
+))}

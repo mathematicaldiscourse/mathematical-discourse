@@ -1,0 +1,23 @@
+---
+import { formatIssueLabel } from '../lib/utils';
+
+interface Props {
+  issueNumber: number;
+  volumeNumber?: number;
+  issueColor?: string;
+  label?: string;
+  href?: string;
+}
+
+const { issueNumber, volumeNumber, issueColor, label, href } = Astro.props;
+const Tag = href ? 'a' : 'span';
+const issueLabel = formatIssueLabel(volumeNumber, issueNumber);
+---
+
+<Tag
+  href={href}
+  class={`inline-flex items-center gap-2 md:gap-3 ${href ? 'no-underline hover:underline' : ''}`}
+>
+  {issueColor && <span class="issue-label__dot inline-block size-5 md:size-6 rounded-[1px] shrink-0" style={`background-color: ${issueColor};`} />}
+  <span>{issueLabel}{label ? ` \u2022 ${label}` : ''}</span>
+</Tag>

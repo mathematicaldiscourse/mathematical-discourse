@@ -1,0 +1,29 @@
+---
+import IssueLabel from './IssueLabel.astro';
+import DotDivider from './DotDivider.astro';
+import Description from './Description.astro';
+import { formatDate } from '../lib/utils';
+
+interface Props {
+  issueNumber: number;
+  volumeNumber?: number;
+  publicationDate: string;
+  issueColor?: string;
+  summary?: string;
+  showBorder?: boolean;
+  issueSlug?: string;
+}
+
+const { issueNumber, volumeNumber, publicationDate, issueColor, summary, showBorder = false, issueSlug } = Astro.props;
+---
+
+<div>
+  {showBorder && <DotDivider />}
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4">
+    <span class="inline-flex items-center font-mono uppercase text-sm md:text-base lg:text-lg leading-none min-w-[17rem] md:min-w-[20rem] lg:min-w-[22rem]">
+      <IssueLabel issueNumber={issueNumber} volumeNumber={volumeNumber} issueColor={issueColor} label={formatDate(publicationDate)} href={issueSlug ? `/issue/${issueSlug}` : undefined} />
+    </span>
+    <slot name="action" />
+  </div>
+  {summary && <Description text={summary} />}
+</div>

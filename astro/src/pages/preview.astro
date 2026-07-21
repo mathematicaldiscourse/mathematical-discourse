@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageBlocks from '../components/PageBlocks.astro';
+import TalkView from '../components/TalkView.astro';
+import IssueView from '../components/IssueView.astro';
+import { fetchDraftPage, fetchDraftTalk, fetchDraftIssue, fetchTalks, fetchTalksByIssue } from '../lib/wordpress';
+import { preparePageData } from '../lib/pageData';
+
+// SSR — fetches live draft content per request (not prerendered).
+export const prerender = false;
+
+const token = Astro.url.searchParams.get('token');
+const id = Number(Astro.url.searchParams.get('id'));
+const type = Astro.url.searchParams.get('type') || 'page';
+
+const validToken = import.meta.env.WP_PREVIEW_TOKEN;
+
+// Gate: only legitimate preview links (carrying the shared token) may fetch drafts.
+if (!validToken || token !== validToken) {
+  return new Response('Invalid or missing preview token.', { status: 403 });
+}
+if (!id) {
+  return new Response('Missing post id.', { status: 400 });
+}
+
+// Never let a draft preview get indexed.
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+
+// Shared: talk slug → issue slug, for rewriting links in page/talk content.
+const talkIssueMap = new Map(
+  (await fetchTalks()).filter((t) => t.slug && t.issue_slug).map((t) => [t.slug, t.issue_slug!])
+);
+
+let kind: 'page' | 'talk' | 'issue' | null = null;
+let heroTitle = 'Preview';
+let blocks: any[] = [];
+let pageData: any = null;
+let talk: any = null;
+let talkIssue: any = null;
+let talkUrl = '';
+let issue: any = null;
+let issueTalks: any[] = [];
+let issueSlug = '';
+
+if (type === 'page') {
+  const page = await fetchDraftPage(id);
+  if (!page) return new Response('Draft not found, or preview auth failed.', { status: 404 });
+  blocks = page.acf?.content_blocks || [];
+  pageData = await preparePageData(blocks);
+  heroTitle = page.acf?.hero_title || page.title?.rendered || 'Preview';
+  kind = 'page';
+} else if (type === 'talk') {
+  talk = await fetchDraftTalk(id);
+  if (!talk) return new Response('Draft not found, or preview auth failed.', { status: 404 });
+  const rel = talk.acf?.related_issue?.[0];
+  talkIssue = rel ? { acf: rel.acf, slug: rel.post_name || rel.slug } : null;
+  if (!talkIssue) return new Response('This talk has no related issue to preview under.', { status: 400 });
+  issueSlug = talkIssue.slug;
+  talkUrl = new URL(`/issue/${issueSlug}/${talk.slug}`, Astro.url).toString();
+  heroTitle = talk.title?.rendered || 'Talk preview';
+  kind = 'talk';
+} else if (type === 'issue') {
+  issue = await fetchDraftIssue(id);
+  if (!issue) return new Response('Draft not found, or preview auth failed.', { status: 404 });
+  issueSlug = issue.slug || issue.post_name || '';
+  issueTalks = await fetchTalksByIssue(issue.id);
+  heroTitle = 'Issue preview';
+  kind = 'issue';
+} else {
+  return new Response('Unsupported preview type.', { status: 400 });
+}
+---
+
+<BaseLayout title={`Preview — ${heroTitle}`}>
+  <div class="bg-black text-off-white font-mono text-xs uppercase tracking-wide px-4 py-2">
+    Draft preview — not published
+  </div>
+
+  {kind === 'page' && (
+    <>
+      <PageHero title={heroTitle} />
+      <PageBlocks
+        blocks={blocks}
+        currentIssueData={pageData.currentIssueData}
+        allIssuesData={pageData.allIssuesData}
+        issueSettings={pageData.issueSettings}
+        talkIssueMap={talkIssueMap}
+      />
+    </>
+  )}
+
+  {kind === 'talk' && (
+    <TalkView talk={talk} issue={talkIssue} issueSlug={issueSlug} talkUrl={talkUrl} talkIssueMap={talkIssueMap} />
+  )}
+
+  {kind === 'issue' && (
+    <IssueView issue={issue} talks={issueTalks} issueSlug={issueSlug} />
+  )}
+</BaseLayout>

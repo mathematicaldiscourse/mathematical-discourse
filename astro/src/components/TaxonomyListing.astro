@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TalkItem from './TalkItem.astro';
+import IssueMeta from './IssueMeta.astro';
+import PageHero from './PageHero.astro';
+import type { Issue, Talk, TaxonomyTerm } from '../lib/types';
+
+/**
+ * Shared listing page for taxonomy archives (subject areas, talk formats):
+ * hero + optional description, then talks grouped under their issue,
+ * newest issue first.
+ */
+interface Props {
+  term: TaxonomyTerm;
+  talks: Talk[];
+  issues: Issue[];
+}
+
+const { term, talks, issues } = Astro.props;
+
+const issueMap = new Map(issues.map((i) => [i.slug, i]));
+
+// Group talks by issue slug. Talks without an issue have no page on the
+// site ([talk].astro skips them), so they're excluded here too.
+const orphans = talks.filter((t) => !t.issue_slug);
+if (orphans.length > 0) {
+  console.warn(`[build] ${orphans.length} talk(s) without an issue skipped on /${term.slug}:`, orphans.map((t) => t.slug).join(', '));
+}
+const grouped = new Map<string, Talk[]>();
+for (const talk of talks) {
+  if (!talk.issue_slug) continue;
+  if (!grouped.has(talk.issue_slug)) grouped.set(talk.issue_slug, []);
+  grouped.get(talk.issue_slug)!.push(talk);
+}
+
+// Sort groups by issue publication date (newest first)
+const sortedGroups = [...grouped.entries()].sort((a, b) => {
+  const issueA = issueMap.get(a[0]);
+  const issueB = issueMap.get(b[0]);
+  return (issueB?.acf?.publication_date || '').localeCompare(issueA?.acf?.publication_date || '');
+});
+---
+
+<BaseLayout title={term.name} description={term.description || undefined} seo={(term as any).yoast_head_json}>
+  <PageHero title={term.name} />
+  {term.description && (
+    <div class="grid grid-cols-12 mt-4">
+      <p class="col-span-12 sm:col-span-11 md:col-span-10 lg:col-span-9 font-sans text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl leading-snug">{term.description}</p>
+    </div>
+  )}
+
+  {sortedGroups.map(([issueSlug, issueTalks]) => {
+    const issue = issueMap.get(issueSlug);
+    return (
+      <section class="mt-8 md:mt-10" data-spot-color={issue?.acf?.issue_color}>
+        {issue && (
+          <IssueMeta
+            issueNumber={issue.acf.issue_number}
+            volumeNumber={issue.acf.volume_number}
+            publicationDate={issue.acf.publication_date}
+            issueColor={issue.acf.issue_color}
+            issueSlug={issue.slug}
+            showBorder
+          />
+        )}
+        {issueTalks.map((talk) => (
+          <TalkItem
+            title={talk.acf.talk_title_latex}
+            slug={talk.slug}
+            issueSlug={issueSlug}
+            speakers={talk.acf.speakers}
+            subjectAreas={talk.subject_areas}
+            issueColor={issue?.acf?.issue_color}
+            talkDate={talk.acf.talk_date}
+            hostInstitution={talk.acf.host_institution}
+            duration={talk.acf.video_duration}
+          />
+        ))}
+      </section>
+    );
+  })}
+</BaseLayout>

@@ -1,0 +1,26 @@
+# Mathematical Discourse
+
+> A peer-reviewed video journal for mathematical research talks.
+
+Mathematical Discourse publishes curated video talks by leading mathematicians, organized by issue and volume. Each talk includes a video recording, abstract, table of contents with timestamps, and citation information.
+
+## Content
+
+- Talks: Video recordings of mathematical research presentations
+- Issues: Grouped collections of talks published periodically
+- Subject Areas: Algebra, Algebraic Geometry, Analysis, Combinatorics, Dynamics, Geometry, Lie Theory, Logic, Number Theory, Partial Differential Equations, Probability, Topology
+
+## Structure
+
+- /: Homepage with the current issue
+- /issues: All issues listed by volume
+- /issue/[slug]: Individual issue with its talks
+- /issue/[slug]/[talk]: Individual talk page with video, abstract, synopsis, and table of contents
+- /about: About the journal and editorial board
+- /submit: Submission guidelines
+- /search: Search and filter all talks by subject, format, issue, and year
+- /subject/[slug]: Talks filtered by mathematical subject area
+
+## Contact
+
+Mathematical Discourse is published by the Institute for Advanced Study.

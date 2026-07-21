@@ -1,0 +1,219 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import SpotGradient from '../components/SpotGradient.svelte';
+import RssLinkIsland from '../components/RssLinkIsland.svelte';
+import HoverHighlight from '../components/HoverHighlight.svelte';
+import MobileNav from '../components/MobileNav.svelte';
+import { fetchSiteSettings, fetchPrimaryNav, fetchFooterNav } from '../lib/wordpress';
+import '../styles/global.css';
+// Self-hosted KaTeX styles (bundled from the katex package, matching the render
+// version) so no visitor request goes to a third-party CDN.
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  spotColor?: string;
+  spotVolume?: number;
+  spotIssue?: number;
+  /** Yoast `yoast_head_json` for the current post, if any — overrides the defaults. */
+  seo?: any;
+}
+
+const defaultDescription = 'A peer-reviewed video journal for mathematical research talks.';
+const { title, description = defaultDescription, ogImage, spotColor, spotVolume, spotIssue, seo } = Astro.props;
+const siteBase = Astro.site?.toString().replace(/\/$/, '') || Astro.url.origin;
+const fullTitle = title === 'Mathematical Discourse' ? title : `${title} | Mathematical Discourse`;
+const canonicalUrl = `${siteBase}${Astro.url.pathname}`;
+const ogImageUrl = ogImage || `${siteBase}/og-default.png`;
+
+// Prefer Yoast's per-page SEO (yoast_head_json) when present; fall back to the
+// site defaults. Yoast's canonical/og_url are already frontend URLs because the
+// theme rewrites WordPress permalinks to the front end.
+const metaTitle = seo?.title || fullTitle;
+const metaDescription = seo?.description || description;
+const canonical = seo?.canonical || canonicalUrl;
+const ogType = seo?.og_type || 'website';
+const ogTitle = seo?.og_title || metaTitle;
+const ogDescription = seo?.og_description || metaDescription;
+const ogUrl = seo?.og_url || canonical;
+const ogImageFinal = seo?.og_image?.[0]?.url || ogImageUrl;
+const twitterCard = seo?.twitter_card || 'summary_large_image';
+const twitterTitle = seo?.twitter_title || ogTitle;
+const twitterDescription = seo?.twitter_description || ogDescription;
+const twitterImage = seo?.twitter_image || ogImageFinal;
+const robots = seo?.robots ? Object.values(seo.robots).join(', ') : '';
+function renderFundersLabel(funders: { name: string; url: string }[]): string {
+  if (!funders.length) return '';
+  const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const linkify = (f: { name: string; url: string }) =>
+    f.url
+      ? `<a href="${escape(f.url)}" class="underline hover:bg-highlighter transition-colors">${escape(f.name)}</a>`
+      : escape(f.name);
+  return `Partially funded by ${funders.map(linkify).join(', ')}`;
+}
+
+const [settings, navItems, footerNavItems] = await Promise.all([
+  fetchSiteSettings(),
+  fetchPrimaryNav(),
+  fetchFooterNav(),
+]);
+
+const fundersHtml = renderFundersLabel(settings.footer_funders);
+const rssFeedUrl = `${siteBase}/feed/issues.xml`;
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonical} />
+    {robots && <meta name="robots" content={robots} />}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:url" content={ogUrl} />
+    <meta property="og:image" content={ogImageFinal} />
+    <meta property="og:site_name" content="Mathematical Discourse" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content={twitterCard} />
+    <meta name="twitter:title" content={twitterTitle} />
+    <meta name="twitter:description" content={twitterDescription} />
+    <meta name="twitter:image" content={twitterImage} />
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="Mathematical Discourse — Issues" href="/feed/issues.xml" />
+
+    <title>{metaTitle}</title>
+    <ClientRouter />
+  </head>
+  <body class="font-sans">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:z-[100] focus:bg-black focus:text-off-white focus:px-4 focus:py-2 focus:font-mono focus:text-sm">Skip to main content</a>
+    {settings.enable_spot_gradient && <SpotGradient client:load color={spotColor} />}
+    {spotColor && spotVolume != null && spotIssue != null && (
+      <span class="sr-only" aria-hidden="true" data-spot-color={spotColor}></span>
+    )}
+    <HoverHighlight client:load />
+
+    <!-- Site Header -->
+    <div class="sticky top-0 z-40 bg-off-white" id="site-header">
+      <!-- Desktop Nav -->
+      <header class="hidden md:block border-t border-b border-black">
+        <nav class="site-container flex items-center justify-between h-[50px] font-mono text-sm uppercase">
+          <div class="flex items-center self-stretch">
+            <a href="/" aria-label="Mathematical Discourse — home" class="flex items-center justify-center bg-black text-off-white no-underline px-3 self-stretch font-serif hover:bg-highlighter hover:text-black transition-colors">MD</a>
+            <div class="flex items-center self-stretch">
+              {navItems.map((item) => (
+                <a href={item.url} class="no-underline flex items-center self-stretch px-3 hover:bg-highlighter transition-colors">{item.title}</a>
+              ))}
+            </div>
+          </div>
+          <a href="/search" class="flex items-center gap-1.5 no-underline border-l border-r border-black px-6 self-stretch hover:bg-highlighter transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search</a>
+        </nav>
+      </header>
+
+      <!-- Mobile Nav -->
+      <MobileNav client:load navItems={navItems} />
+    </div>
+
+    <!-- Main -->
+    <main id="main-content" class="site-container">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-24 md:mt-32 lg:mt-40">
+      <div class="border-t border-black"></div>
+
+      <div class="site-container flex flex-col md:grid md:grid-cols-3">
+        <!-- Nav links -->
+        <div class="flex flex-col -mx-6 md:-mx-0 md:row-span-full md:border-r border-black md:-ml-10 2xl:border-l">
+          {footerNavItems.map((item) => (
+            <a
+              href={item.url}
+              class="no-underline flex items-center justify-center md:justify-start font-mono text-3xl md:text-4xl lg:text-5xl py-8 md:py-6 md:pl-10 border-b border-black last:md:border-b-0 last:md:flex-1 transition-colors hover:bg-highlighter"
+            >{item.title}</a>
+          ))}
+        </div>
+
+        <!-- Mobile footer -->
+        <div class="md:hidden flex flex-col gap-8 py-8">
+          <div class="flex flex-col gap-3">
+            {settings.footer_links_heading && (
+              <p class="font-sans font-bold text-base">{settings.footer_links_heading}</p>
+            )}
+            <div class="flex flex-col gap-2 items-start">
+              {settings.footer_links.map((link) => (
+              link.link_type === 'rss' ? (
+                <RssLinkIsland
+                  client:load
+                  label={link.label}
+                  feedUrl={rssFeedUrl}
+                  triggerClass="font-mono text-xl underline hover:bg-highlighter transition-colors bg-transparent border-none cursor-pointer p-0 text-inherit text-left"
+                />
+              ) : (
+                <a href={link.url || '#'} class="font-mono text-xl underline hover:bg-highlighter transition-colors">{link.label}</a>
+              )
+            ))}
+            </div>
+          </div>
+          {fundersHtml && (
+            <p class="font-mono uppercase text-sm tracking-wider leading-relaxed" set:html={fundersHtml} />
+          )}
+          <p class="font-serif text-4xl leading-[0.9]">Mathematical<br>Discourse</p>
+          {settings.footer_privacy_url && (
+            <a href={settings.footer_privacy_url} class="font-mono text-sm uppercase underline hover:bg-highlighter transition-colors self-start">Privacy Policy</a>
+          )}
+          <p class="font-mono text-sm uppercase">&copy; {new Date().getFullYear()} {settings.footer_org_name || 'Mathematical Discourse'}</p>
+        </div>
+
+        <!-- Desktop footer -->
+        <div class="hidden md:flex flex-col justify-between gap-10 p-16 col-span-2">
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-wrap items-center gap-x-12 gap-y-3">
+              {settings.footer_links.map((link) => (
+                link.link_type === 'rss' ? (
+                  <RssLinkIsland
+                    client:load
+                    label={link.label}
+                    feedUrl={rssFeedUrl}
+                    triggerClass="font-mono text-2xl underline hover:bg-highlighter transition-colors bg-transparent border-none cursor-pointer p-0 text-inherit"
+                  />
+                ) : (
+                  <a href={link.url || '#'} class="font-mono text-2xl underline hover:bg-highlighter transition-colors">{link.label}</a>
+                )
+              ))}
+            </div>
+          </div>
+          {fundersHtml && (
+            <p class="font-mono uppercase text-sm tracking-wider" set:html={fundersHtml} />
+          )}
+        </div>
+      </div>
+
+      <div class="hidden md:block border-t border-black"></div>
+      <div class="hidden md:flex site-container items-center justify-between py-5">
+        <div class="flex items-center gap-6">
+          {settings.footer_privacy_url && (
+            <a href={settings.footer_privacy_url} class="font-mono text-sm uppercase underline hover:bg-highlighter transition-colors">Privacy Policy</a>
+          )}
+          <p class="font-mono text-sm uppercase">&copy; {new Date().getFullYear()} {settings.footer_org_name || 'Mathematical Discourse'}</p>
+        </div>
+        <p class="font-serif text-xl leading-[0.9]">Mathematical<br>Discourse</p>
+      </div>
+    </footer>
+
+  </body>
+</html>

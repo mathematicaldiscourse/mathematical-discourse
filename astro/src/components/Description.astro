@@ -1,0 +1,14 @@
+---
+interface Props {
+  text?: string;
+  html?: string;
+}
+
+const { text, html } = Astro.props;
+---
+
+{html ? (
+  <div class="font-sans text-base md:text-lg mt-3 max-w-[65ch] leading-relaxed" set:html={html} />
+) : text ? (
+  <p class="font-sans text-base md:text-lg mt-3 max-w-[65ch] leading-relaxed">{text}</p>
+) : null}

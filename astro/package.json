@@ -1,0 +1,37 @@
+{
+  "name": "astro",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "deploy": "vercel build --prod && vercel deploy --prebuilt --prod",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/svelte": "^8.0.4",
+    "@astrojs/vercel": "^10.0.3",
+    "@fontsource/baskervville": "^5.2.9",
+    "@fontsource/baskervville-sc": "^5.2.9",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/libre-baskerville": "^5.2.10",
+    "@fontsource/open-sans": "^5.2.7",
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.1",
+    "fuse.js": "^7.1.0",
+    "katex": "^0.16.44",
+    "melt": "^0.44.0",
+    "svelte": "^5.55.0",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^5.9.3"
+  }
+}

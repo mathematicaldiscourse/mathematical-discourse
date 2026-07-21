@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import IssueView from '../../components/IssueView.astro';
+import { fetchIssueBySlug, fetchTalksByIssue, fetchIssues } from '../../lib/wordpress';
+import { formatIssueLabel } from '../../lib/utils';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const issues = await fetchIssues();
+  return issues.map((issue) => ({ params: { slug: issue.slug } }));
+}
+
+const { slug } = Astro.params;
+const issue = await fetchIssueBySlug(slug!);
+
+if (!slug || !issue) {
+  return Astro.rewrite('/404');
+}
+
+const talks = await fetchTalksByIssue(issue.id);
+---
+
+<BaseLayout title={formatIssueLabel(issue.acf.volume_number, issue.acf.issue_number)} description={issue.acf.issue_summary || undefined} seo={(issue as any).yoast_head_json} spotColor={issue.acf.issue_color} spotVolume={issue.acf.volume_number} spotIssue={issue.acf.issue_number}>
+  <IssueView issue={issue} talks={talks} issueSlug={slug} />
+</BaseLayout>

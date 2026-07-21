@@ -1,0 +1,45 @@
+---
+import Tags from './Tags.astro';
+import { formatDate } from '../lib/utils';
+
+interface Props {
+  speakers: { name: string; affiliation?: string }[];
+  subjectAreas?: { name: string; slug: string }[];
+  talkDate?: string;
+  hostInstitution?: string;
+  duration?: string;
+  /** Talk page promotes author names larger on desktop; listings leave this off. */
+  prominentSpeakers?: boolean;
+  /** Talk page hides the runtime/date/location line (it's shown in the Talk Data tab). */
+  hideMeta?: boolean;
+  /** Talk page shows each speaker's affiliation in parentheses; listings show names only. */
+  showAffiliations?: boolean;
+}
+
+const { speakers, subjectAreas, talkDate, hostInstitution, duration, prominentSpeakers = false, hideMeta = false, showAffiliations = false } = Astro.props;
+const speakerClass = prominentSpeakers ? 'text-lg md:text-xl lg:text-2xl' : 'text-lg';
+
+let filmed = '';
+if (talkDate || hostInstitution) {
+  filmed = 'Filmed';
+  if (talkDate) filmed += ` on ${formatDate(talkDate)}`;
+}
+
+// Location is its own bullet-separated segment (host_institution is sometimes
+// "Online", so "at ..." doesn't fit). It's hidden on mobile so the line stays
+// on a single row.
+const location = hostInstitution || '';
+const metaParts = [duration, filmed].filter(Boolean);
+const showMeta = !!duration && metaParts.length > 0;
+---
+
+{subjectAreas && <Tags tags={subjectAreas} />}
+<slot />
+<p class={`font-serif ${speakerClass}`}>
+  {speakers.map(s => showAffiliations && s.affiliation ? `${s.name} (${s.affiliation})` : s.name).join(', ')}
+</p>
+{showMeta && !hideMeta && (
+  <p class="font-mono uppercase text-xs md:text-sm tracking-wider">
+    <span class="font-sans" aria-hidden="true">▶</span> {metaParts.join(' • ')}{location && <span class="hidden md:inline"> • {location}</span>}
+  </p>
+)}

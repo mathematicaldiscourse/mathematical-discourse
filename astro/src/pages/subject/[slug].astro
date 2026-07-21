@@ -1,0 +1,25 @@
+---
+import TaxonomyListing from '../../components/TaxonomyListing.astro';
+import { fetchSubjectAreaBySlug, fetchTalksBySubjectArea, fetchIssues, fetchSubjectAreas } from '../../lib/wordpress';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const terms = await fetchSubjectAreas();
+  return terms.map((t) => ({ params: { slug: t.slug } }));
+}
+
+const { slug } = Astro.params;
+const term = await fetchSubjectAreaBySlug(slug!);
+
+if (!term) {
+  return Astro.rewrite('/404');
+}
+
+const [talks, issues] = await Promise.all([
+  fetchTalksBySubjectArea(term.id!),
+  fetchIssues(),
+]);
+---
+
+<TaxonomyListing term={term} talks={talks} issues={issues} />

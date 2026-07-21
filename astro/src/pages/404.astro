@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import Button from '../components/Button.astro';
+import { fetchSiteSettings } from '../lib/wordpress';
+
+export const prerender = true;
+
+const settings = await fetchSiteSettings();
+---
+
+<BaseLayout title="Page Not Found">
+  <PageHero title="404" />
+  <p class="font-sans text-base md:text-lg mt-6 max-w-[65ch]">{settings.not_found_text}</p>
+  <div class="mt-8">
+    <Button href={settings.not_found_button_url || '/'} text={settings.not_found_button_label || 'Go Home'} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import TalkView from '../../../components/TalkView.astro';
+import { fetchTalkBySlug, fetchIssueBySlug, fetchTalks, fetchIssues, fetchTalksByIssue } from '../../../lib/wordpress';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  // A talk can belong to more than one issue, and its page lives at
+  // /issue/<issue>/<talk>. Generate a page for every issue a talk is in (using
+  // the same issue → talks source the issue pages link from), otherwise the
+  // non-primary issues' URLs 404.
+  const issues = await fetchIssues();
+  const perIssue = await Promise.all(
+    issues.map(async (issue) => {
+      const talks = await fetchTalksByIssue(issue.id);
+      return talks
+        .filter((t) => t.slug)
+        .map((t) => ({ params: { slug: issue.slug, talk: t.slug } }));
+    })
+  );
+  return perIssue.flat();
+}
+
+const { slug: issueSlug, talk: talkSlug } = Astro.params;
+const [talk, issue] = await Promise.all([
+  fetchTalkBySlug(talkSlug!),
+  fetchIssueBySlug(issueSlug!),
+]);
+
+// A talk URL is only valid under its issue — treat a missing issue as a 404
+// too, so downstream code can rely on `issue` being present.
+if (!talk || !issue) {
+  return Astro.rewrite('/404');
+}
+
+const acf = talk.acf;
+const talkIssueMap = new Map(
+  (await fetchTalks()).filter((t) => t.slug && t.issue_slug).map((t) => [t.slug, t.issue_slug!])
+);
+const talkDescription = acf.comments?.replace(/<[^>]+>/g, '').replace(/\$[^$]+\$/g, '').trim() || undefined;
+const talkUrl = new URL(`/issue/${issueSlug}/${talkSlug}`, Astro.url).toString();
+---
+
+<BaseLayout title={talk.title.rendered} description={talkDescription} seo={(talk as any).yoast_head_json} spotColor={issue.acf.issue_color} spotVolume={issue.acf.volume_number} spotIssue={issue.acf.issue_number}>
+  <TalkView talk={talk} issue={issue} issueSlug={issueSlug!} talkUrl={talkUrl} talkIssueMap={talkIssueMap} />
+</BaseLayout>

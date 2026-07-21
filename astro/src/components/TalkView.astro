@@ -1,0 +1,119 @@
+---
+import IssueLabel from './IssueLabel.astro';
+import TalkMeta from './TalkMeta.astro';
+import Description from './Description.astro';
+import VideoPlayerIsland from './VideoPlayerIsland.svelte';
+import TalkTabs from './TalkTabs.svelte';
+import { renderLatex } from '../lib/katex';
+import { rewriteContentLinks } from '../lib/links';
+import { formatDate, extractYouTubeId } from '../lib/utils';
+
+interface Props {
+  talk: any;
+  issue: any;
+  issueSlug: string;
+  talkUrl: string;
+  talkIssueMap: Map<string, string>;
+}
+
+const { talk, issue, issueSlug, talkUrl, talkIssueMap } = Astro.props;
+const acf = talk.acf;
+const primaryVideo = acf.video_links?.[0]?.url;
+const isExternal = (acf.video_type || 'youtube') === 'external';
+const youtubeId = !isExternal && primaryVideo ? extractYouTubeId(primaryVideo) : null;
+const videoThumbnail = acf.video_thumbnail?.url || '';
+// A Table of Contents can exist on any talk. Only an embedded YouTube player
+// can seek, so external talks get a read-only TOC (see canSeek below).
+const tocEntries = acf.toc_entries && acf.toc_entries.length > 0 ? acf.toc_entries : [];
+const canSeek = !!youtubeId;
+
+// Label for an additional (non-primary) video link: the editor's Link text,
+// or a fallback derived from the URL's host when they leave it blank.
+function autoVideoLabel(url: string): string {
+  if (/youtube\.com|youtu\.be/.test(url)) return 'Watch on YouTube';
+  if (/vimeo\.com/.test(url)) return 'Watch on Vimeo';
+  return 'Watch on external site';
+}
+
+const renderedTocEntries = (tocEntries as any[]).map((entry) => ({
+  subtitle: renderLatex(entry.subtitle),
+  timestamp: entry.timestamp,
+}));
+
+const synopsis = {
+  dateFilmed: formatDate(acf.talk_date),
+  location: acf.host_institution || '',
+  locationUrl: acf.host_institution_url || '',
+  mscCodes: acf.msc_codes || '',
+  fundingInformation: acf.funding_information || '',
+  comments: renderLatex(acf.comments || ''),
+  citation: {
+    title: talk.title.rendered,
+    speakers: (acf.speakers || []).map((s: any) => s.name),
+    year: String(acf.talk_date || '').replace(/[^0-9]/g, '').slice(0, 4),
+    volume: issue.acf.volume_number ?? null,
+    number: issue.acf.issue_number ?? null,
+    url: talkUrl,
+  },
+  printArticles: (acf.print_articles || []).map((a: any) => ({ text: a.text || '', url: a.url || '' })).filter((a: any) => a.url),
+  subjectAreas: (talk.subject_areas || []).map((t: any) => ({ name: t.name, slug: t.slug })),
+};
+
+// Freeform notes (audience questions, corrections, etc.) — LaTeX + links, shown
+// in their own tab only when present.
+const talkNotes = acf.talk_notes ? rewriteContentLinks(renderLatex(acf.talk_notes), talkIssueMap) : '';
+---
+
+<article class="max-w-7xl">
+  <p class="font-mono uppercase text-sm md:text-base lg:text-lg mt-8 md:mt-12">
+    <IssueLabel issueNumber={issue.acf.issue_number} volumeNumber={issue.acf.volume_number} issueColor={issue.acf.issue_color} href={`/issue/${issueSlug}`} />
+  </p>
+
+  <div class="flex flex-col gap-3.5 mt-8 md:mt-10">
+    <TalkMeta speakers={acf.speakers} talkDate={acf.talk_date} hostInstitution={acf.host_institution} duration={acf.video_duration} prominentSpeakers hideMeta showAffiliations>
+      <h1 class="font-sans text-2xl md:text-3xl lg:text-4xl xl:text-5xl leading-[1.12]" set:html={renderLatex(acf.talk_title_latex)} />
+    </TalkMeta>
+  </div>
+
+  <div class="mt-8 md:mt-10">
+    <Description html={rewriteContentLinks(renderLatex(acf.abstract), talkIssueMap)} />
+  </div>
+
+  {youtubeId ? (
+    <div class="mt-8">
+      <VideoPlayerIsland client:load videoId={youtubeId} />
+    </div>
+  ) : primaryVideo ? (
+    <div class="mt-8">
+      <a
+        href={primaryVideo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group relative flex items-center justify-center w-full max-w-6xl aspect-video border border-black rounded-xl overflow-hidden bg-off-white"
+      >
+        {videoThumbnail && (
+          <img src={videoThumbnail} alt="" class="absolute inset-0 w-full h-full object-cover" />
+        )}
+        <span class="relative inline-flex items-center gap-2 px-6 py-3 border border-black rounded-xl font-mono text-sm md:text-base uppercase bg-off-white transition-[background-color,border-radius] duration-150 group-hover:bg-highlighter group-hover:rounded-[999px]">
+          <svg class="size-4" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+          Watch talk
+        </span>
+      </a>
+    </div>
+  ) : null}
+
+  {acf.video_links && acf.video_links.length > 1 && (
+    <p class="font-mono text-sm mt-2">
+      {acf.video_links.slice(1).map((v: any, i: number) => (
+        <span>
+          {i > 0 && ' | '}
+          <a href={v.url} target="_blank" rel="noopener noreferrer" class="underline hover:bg-highlighter transition-colors">{v.label?.trim() || autoVideoLabel(v.url)}</a>
+        </span>
+      ))}
+    </p>
+  )}
+
+  <div class="mt-10">
+    <TalkTabs client:load tocEntries={renderedTocEntries} canSeek={canSeek} synopsis={synopsis} talkNotes={talkNotes} />
+  </div>
+</article>

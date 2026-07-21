@@ -1,0 +1,36 @@
+---
+const dotCount = 45;
+const dots = Array.from({ length: dotCount }, (_, i) => i);
+---
+
+<div class="flex items-center" aria-hidden="true">
+  <div class="flex-[4] h-px bg-black"></div>
+  <div class="flex-1 flex items-center justify-between px-1">
+    {dots.map((i) => (
+      <span
+        class="dot-divider__dot bg-black"
+        style={`animation-delay: ${i * 0.12}s;`}
+      />
+    ))}
+  </div>
+</div>
+
+<style>
+  .dot-divider__dot {
+    width: 2.5px;
+    height: 2.5px;
+    flex-shrink: 0;
+    animation: dot-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes dot-pulse {
+    0%, 100% {
+      transform: scale(0.4);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+</style>

@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@import "@fontsource/baskervville/400.css";
+@import "@fontsource/baskervville/400-italic.css";
+@import "@fontsource/open-sans/400.css";
+@import "@fontsource/open-sans/600.css";
+@import "@fontsource/open-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+@theme {
+  --font-serif: "Baskervville", "Baskerville", Georgia, serif;
+  --font-sans: "Open Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-black: #131313;
+  --color-off-white: #fffaf0;
+  --color-highlighter: #d9ff02;
+  --color-coral: #ff5e76;
+}
+
+body {
+  @apply bg-off-white text-black font-sans text-base leading-relaxed;
+  text-wrap: pretty;
+  /* Baskervville's default digits are oldstyle figures (varying heights /
+     descenders), which read as "small caps" numbers. Force lining figures
+     everywhere. Inherited; a no-op for Open Sans / IBM Plex Mono, which
+     are lining by default. */
+  font-variant-numeric: lining-nums;
+}
+
+::selection {
+  background-color: var(--color-highlighter);
+  color: var(--color-black);
+}
+
+/* Text-fragment highlight (URLs with #:~:text=...). Browsers default to
+   their own color (Chrome's pinkish-purple); match our highlighter. */
+::target-text {
+  background-color: var(--color-highlighter);
+  color: var(--color-black);
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+
+.site-container {
+  @apply max-w-[1800px] mx-auto px-6 md:px-10;
+  overflow-x: hidden;
+}
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Focus indicators */
+:focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Long Form Text — WYSIWYG typography */
+.long-form-text {
+  @apply font-sans text-lg leading-[1.6];
+}
+
+.long-form-text h2 {
+  @apply font-serif text-2xl md:text-3xl lg:text-4xl leading-tight mt-10 mb-3;
+}
+
+.long-form-text h3 {
+  @apply font-serif text-xl md:text-2xl leading-tight mt-8 mb-2;
+}
+
+.long-form-text p {
+  @apply mb-6;
+}
+
+.long-form-text ul {
+  @apply list-disc pl-8 mb-6 space-y-1;
+}
+
+.long-form-text ol {
+  @apply list-decimal pl-8 mb-6 space-y-1;
+}
+
+.long-form-text ul ul,
+.long-form-text ol ol,
+.long-form-text ul ol,
+.long-form-text ol ul {
+  @apply mt-1 mb-0;
+}
+
+.long-form-text blockquote {
+  @apply border-l-2 border-black pl-6 italic my-6;
+}
+
+.long-form-text a {
+  @apply underline transition-colors;
+}
+
+.long-form-text a:hover {
+  @apply bg-highlighter;
+}
+
+.long-form-text strong {
+  @apply font-bold;
+}
+
+.long-form-text figure {
+  @apply my-8;
+}
+
+.long-form-text img {
+  @apply w-full h-auto;
+}
+
+.long-form-text figure img {
+  @apply w-full h-auto;
+}
+
+/* Embedded video (YouTube oembed etc.) — full-width, responsive 16:9 */
+.long-form-text iframe {
+  @apply w-full my-8;
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.long-form-text figcaption {
+  @apply font-mono text-sm mt-2;
+}
+
+/* Images are always a single full-width block. Override WordPress's inline
+   pixel width on caption wrappers and neutralize its float/alignment classes. */
+.long-form-text .wp-caption {
+  @apply my-8;
+  width: 100% !important;
+}
+
+.long-form-text .wp-caption-text {
+  @apply font-mono text-sm mt-2;
+}
+
+.long-form-text .alignleft,
+.long-form-text .alignright,
+.long-form-text .aligncenter,
+.long-form-text .alignnone {
+  @apply float-none mx-0 w-full;
+}

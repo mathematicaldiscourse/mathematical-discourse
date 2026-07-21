@@ -1,0 +1,62 @@
+---
+import TalkMeta from './TalkMeta.astro';
+import { renderLatex } from '../lib/katex';
+import { ensureAccessibleHighlight, getContrastText, DEFAULT_HIGHLIGHT } from '../lib/color';
+
+interface Props {
+  title: string;
+  slug: string;
+  issueSlug: string;
+  speakers: { name: string; affiliation?: string }[];
+  subjectAreas?: { name: string; slug: string }[];
+  issueColor?: string;
+  compact?: boolean;
+  talkDate?: string;
+  hostInstitution?: string;
+  duration?: string;
+}
+
+const { title, slug, issueSlug, speakers, subjectAreas, issueColor, compact = false, talkDate, hostInstitution, duration } = Astro.props;
+
+const highlightColor = issueColor ? ensureAccessibleHighlight(issueColor) : DEFAULT_HIGHLIGHT;
+const textColor = getContrastText(highlightColor);
+
+const talkHref = `/issue/${issueSlug}/${slug}`;
+---
+
+<article class="talk-item" style="position: relative; z-index: 1;">
+  <div class="talk-item__body">
+    <TalkMeta speakers={speakers} subjectAreas={subjectAreas} talkDate={talkDate} hostInstitution={hostInstitution} duration={duration}>
+      <div>
+        <a
+          href={talkHref}
+          class:list={['talk-item__link font-sans leading-[1.12]', compact ? 'text-xl md:text-2xl lg:text-3xl' : 'text-xl md:text-2xl lg:text-3xl xl:text-4xl']}
+          data-issue-color={issueColor}
+          style={`--highlight-color: ${highlightColor}; --highlight-text: ${textColor};`}
+          set:html={renderLatex(title)}
+        />
+      </div>
+    </TalkMeta>
+  </div>
+</article>
+
+<style>
+  @reference "../styles/global.css";
+
+  .talk-item {
+    @apply flex flex-col gap-2.5 mt-6 md:mt-9 lg:mt-12;
+  }
+
+  .talk-item__body {
+    @apply flex flex-col gap-2.5 flex-1 min-w-0;
+  }
+
+  .talk-item__link {
+    @apply no-underline text-inherit relative z-1;
+  }
+
+  .talk-item__link :global(.katex) {
+    font-size: 1em;
+    line-height: inherit;
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageBlocks from '../components/PageBlocks.astro';
+import { fetchPageBySlug, fetchFrontPage, fetchPages, fetchSiteSettings } from '../lib/wordpress';
+import { preparePageData } from '../lib/pageData';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const [pages, settings] = await Promise.all([fetchPages(), fetchSiteSettings()]);
+  // The WordPress front page (Settings → Reading) renders at the root path.
+  // Fall back to a page with the slug "home" if no front page is configured.
+  const frontPage = settings.front_page_id
+    ? pages.find((p) => p.id === settings.front_page_id)
+    : pages.find((p) => p.slug === 'home');
+  return pages.map((p) => ({
+    params: { slug: p === frontPage ? undefined : p.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const page = slug ? await fetchPageBySlug(slug) : await fetchFrontPage();
+
+if (!page) {
+  return Astro.rewrite('/404');
+}
+
+const blocks = page.acf?.content_blocks || [];
+const { currentIssueData, allIssuesData, issueSettings, talkIssueMap } = await preparePageData(blocks);
+
+// Determine spot color from current issue if present
+const spotColor = currentIssueData?.acf?.issue_color;
+const spotVolume = currentIssueData?.acf?.volume_number;
+const spotIssue = currentIssueData?.acf?.issue_number;
+const isHome = !slug || slug === 'home';
+
+// Use intro_text block as page description for SEO
+const introBlock = blocks.find((b) => b.acf_fc_layout === 'intro_text');
+const pageDescription = introBlock?.content?.replace(/<[^>]+>/g, '').trim() || undefined;
+
+const homeTagline = isHome ? (await fetchSiteSettings()).home_tagline : '';
+---
+
+<BaseLayout title={page.title.rendered} description={pageDescription} seo={(page as any).yoast_head_json} spotColor={spotColor} spotVolume={spotVolume} spotIssue={spotIssue}>
+  {isHome ? (
+    <div class="pt-8 md:pt-10 lg:pt-12 pb-10 md:pb-12 lg:pb-14">
+      <h1 class="font-serif text-[2.625rem] md:text-[4.125rem] lg:text-[5.25rem] xl:text-[7rem] leading-[0.9]">Mathematical<br>Discourse</h1>
+      {homeTagline && <p class="font-sans text-base md:text-lg lg:text-xl mt-3">{homeTagline}</p>}
+    </div>
+  ) : (
+    <PageHero title={page.acf?.hero_title || page.title.rendered} />
+  )}
+
+  <PageBlocks
+    blocks={blocks}
+    currentIssueData={currentIssueData}
+    allIssuesData={allIssuesData}
+    issueSettings={issueSettings}
+    talkIssueMap={talkIssueMap}
+  />
+</BaseLayout>
