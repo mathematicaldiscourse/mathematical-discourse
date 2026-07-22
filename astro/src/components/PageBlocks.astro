@@ -75,9 +75,7 @@ const {
             />
           ))}
         </section>
-      ) : (
-        <p>No current issue found.</p>
-      );
+      ) : null;
 
     case 'issue_list': {
       const volumeGroups = groupByVolume(allIssuesData);
