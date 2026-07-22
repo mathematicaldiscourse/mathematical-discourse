@@ -27,14 +27,6 @@ const videoThumbnail = acf.video_thumbnail?.url || '';
 const tocEntries = acf.toc_entries && acf.toc_entries.length > 0 ? acf.toc_entries : [];
 const canSeek = !!youtubeId;
 
-// Label for an additional (non-primary) video link: the editor's Link text,
-// or a fallback derived from the URL's host when they leave it blank.
-function autoVideoLabel(url: string): string {
-  if (/youtube\.com|youtu\.be/.test(url)) return 'Watch on YouTube';
-  if (/vimeo\.com/.test(url)) return 'Watch on Vimeo';
-  return 'Watch on external site';
-}
-
 const renderedTocEntries = (tocEntries as any[]).map((entry) => ({
   subtitle: renderLatex(entry.subtitle),
   timestamp: entry.timestamp,
@@ -48,7 +40,7 @@ const synopsis = {
   fundingInformation: acf.funding_information || '',
   comments: renderLatex(acf.comments || ''),
   citation: {
-    title: talk.title.rendered,
+    title: acf.talk_title_latex || talk.title.rendered,
     speakers: (acf.speakers || []).map((s: any) => s.name),
     year: String(acf.talk_date || '').replace(/[^0-9]/g, '').slice(0, 4),
     volume: issue.acf.volume_number ?? null,
@@ -101,17 +93,6 @@ const talkNotes = acf.talk_notes ? rewriteContentLinks(renderLatex(acf.talk_note
       </a>
     </div>
   ) : null}
-
-  {acf.video_links && acf.video_links.length > 1 && (
-    <p class="font-mono text-sm mt-2">
-      {acf.video_links.slice(1).map((v: any, i: number) => (
-        <span>
-          {i > 0 && ' | '}
-          <a href={v.url} target="_blank" rel="noopener noreferrer" class="underline hover:bg-highlighter transition-colors">{v.label?.trim() || autoVideoLabel(v.url)}</a>
-        </span>
-      ))}
-    </p>
-  )}
 
   <div class="mt-10">
     <TalkTabs client:load tocEntries={renderedTocEntries} canSeek={canSeek} synopsis={synopsis} talkNotes={talkNotes} />
