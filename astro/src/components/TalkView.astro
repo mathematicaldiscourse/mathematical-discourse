@@ -22,8 +22,6 @@ const primaryVideo = acf.video_links?.[0]?.url;
 const isExternal = (acf.video_type || 'youtube') === 'external';
 const youtubeId = !isExternal && primaryVideo ? extractYouTubeId(primaryVideo) : null;
 const videoThumbnail = acf.video_thumbnail?.url || '';
-// A Table of Contents can exist on any talk. Only an embedded YouTube player
-// can seek, so external talks get a read-only TOC (see canSeek below).
 const tocEntries = acf.toc_entries && acf.toc_entries.length > 0 ? acf.toc_entries : [];
 const canSeek = !!youtubeId;
 
@@ -51,8 +49,6 @@ const synopsis = {
   subjectAreas: (talk.subject_areas || []).map((t: any) => ({ name: t.name, slug: t.slug })),
 };
 
-// Freeform notes (audience questions, corrections, etc.) — LaTeX + links, shown
-// in their own tab only when present.
 const talkNotes = acf.talk_notes ? rewriteContentLinks(renderLatex(acf.talk_notes), talkIssueMap) : '';
 ---
 

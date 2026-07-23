@@ -5,11 +5,6 @@ import IssueMeta from './IssueMeta.astro';
 import PageHero from './PageHero.astro';
 import type { Issue, Talk, TaxonomyTerm } from '../lib/types';
 
-/**
- * Shared listing page for taxonomy archives (subject areas, talk formats):
- * hero + optional description, then talks grouped under their issue,
- * newest issue first.
- */
 interface Props {
   term: TaxonomyTerm;
   talks: Talk[];
@@ -20,8 +15,6 @@ const { term, talks, issues } = Astro.props;
 
 const issueMap = new Map(issues.map((i) => [i.slug, i]));
 
-// Group talks by issue slug. Talks without an issue have no page on the
-// site ([talk].astro skips them), so they're excluded here too.
 const orphans = talks.filter((t) => !t.issue_slug);
 if (orphans.length > 0) {
   console.warn(`[build] ${orphans.length} talk(s) without an issue skipped on /${term.slug}:`, orphans.map((t) => t.slug).join(', '));
@@ -33,7 +26,6 @@ for (const talk of talks) {
   grouped.get(talk.issue_slug)!.push(talk);
 }
 
-// Sort groups by issue publication date (newest first)
 const sortedGroups = [...grouped.entries()].sort((a, b) => {
   const issueA = issueMap.get(a[0]);
   const issueB = issueMap.get(b[0]);

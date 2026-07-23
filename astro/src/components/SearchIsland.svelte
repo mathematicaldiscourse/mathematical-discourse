@@ -45,10 +45,7 @@
   let sortBy = $state<'date-desc' | 'date-asc' | 'relevance'>('relevance');
   let filtersOpen = $state(false);
 
-  // Filter options are derived from the index (provided as a prop at build time).
   let allSubjects = $derived([...new Set(entries.flatMap((e) => e.subject_areas))].sort());
-  // Talk formats follow a fixed editorial order rather than alphabetical. Any
-  // format not listed here falls to the end, alphabetically.
   const FORMAT_ORDER = ['Board', 'Slides', 'Seminar', 'Colloquium'];
   let allFormats = $derived(
     [...new Set(entries.flatMap((e) => e.talk_format))].sort((a, b) => {
@@ -82,14 +79,12 @@
     snippet?: string;
   }
 
-  // Build a snippet around the first occurrence of a query term in a text field
   function buildSnippet(text: string, q: string): string | undefined {
     if (!text) return undefined;
     const clean = text.replace(/<[^>]+>/g, '');
     const lower = clean.toLowerCase();
     const words = q.trim().toLowerCase().split(/\s+/).filter(w => w.length > 1);
 
-    // Find the earliest matching word
     let earliest = -1;
     for (const word of words) {
       const idx = lower.indexOf(word);
@@ -103,7 +98,6 @@
     if (windowStart > 0) snippet = '\u2026' + snippet;
     if (windowEnd < clean.length) snippet = snippet + '\u2026';
 
-    // Bold the query terms
     for (const word of words) {
       const re = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
       snippet = snippet.replace(re, '<strong>$1</strong>');
@@ -111,7 +105,6 @@
     return snippet;
   }
 
-  // Substring search on long text fields — catches what Fuse.js misses
   function substringMatch(entry: SearchEntry, q: string): boolean {
     const lower = q.trim().toLowerCase();
     const words = lower.split(/\s+/).filter(w => w.length > 1);
@@ -146,11 +139,9 @@
     if (query.trim() && fuse) {
       const q = query.trim();
 
-      // Fuse.js for fuzzy matching (titles, speakers, short fields)
       const searchResults = fuse.search(q);
       const fuseIds = new Set(searchResults.map((r) => r.item.id));
 
-      // Supplement with substring search for long text fields
       for (const entry of filtered) {
         if (!fuseIds.has(entry.id) && substringMatch(entry, q)) {
           fuseIds.add(entry.id);
@@ -159,7 +150,6 @@
 
       filtered = filtered.filter((e) => fuseIds.has(e.id));
 
-      // Attach snippets — new objects, no mutation
       filtered = filtered.map((entry) => {
         for (const field of ['summary_plain', 'abstract_plain'] as const) {
           const snippet = buildSnippet(entry[field] as string, q);
@@ -218,14 +208,11 @@
   }
 
   onMount(() => {
-    // The index arrives as a prop, so there's nothing to fetch. Just restore any
-    // query/filters encoded in the URL (needs the browser's location).
     loadFromUrl();
   });
 </script>
 
 <div class="flex flex-col gap-10 pt-10 pb-20">
-    <!-- Search bar -->
     <div class="flex items-center gap-4 border-b-2 border-black pb-3">
       <svg class="size-6 shrink-0 text-black" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle>
@@ -241,7 +228,6 @@
       />
     </div>
 
-    <!-- Mobile filter toggle -->
     <button
       onclick={() => filtersOpen = !filtersOpen}
       class="lg:hidden inline-flex items-center gap-2 font-mono text-sm font-medium uppercase border border-black rounded-[9px] px-4 py-2 cursor-pointer bg-transparent transition-[background-color,border-radius] duration-150 ease-in-out hover:bg-highlighter hover:rounded-[999px]"
@@ -254,7 +240,6 @@
       </svg>
     </button>
 
-    <!-- Filters -->
     <div
       id="search-filters"
       class="flex-col gap-6 {filtersOpen ? 'flex' : 'hidden lg:flex'}"

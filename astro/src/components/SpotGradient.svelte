@@ -19,10 +19,6 @@
 
   let pointerY: number | null = null;
 
-  // [data-spot-gated] elements (issue rows on the issues page) only drive
-  // the gradient while their [data-expand-gate] talks container is visible;
-  // collapsed or unexpandable rows are inert. Ungated elements (issue/talk
-  // page spans) always count.
   function isEligible(el: HTMLElement): boolean {
     if (!el.hasAttribute('data-spot-gated')) return true;
     const gate = el.querySelector<HTMLElement>('[data-expand-gate]');
@@ -33,22 +29,17 @@
     const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-spot-color]')).filter(isEligible);
     if (targets.length === 0) return null;
 
-    // Prefer the user's pointer Y if known; fall back to viewport center.
     const referenceY = pointerY ?? window.innerHeight / 2;
     let nearestEl: HTMLElement | null = null;
     let nearestDistance = Infinity;
 
     for (const el of targets) {
       const rect = el.getBoundingClientRect();
-      // Distance to nearest edge of the element (0 if cursor is over it).
       const distance = rect.top > referenceY
         ? rect.top - referenceY
         : rect.bottom < referenceY
           ? referenceY - rect.bottom
           : 0;
-      // An expanded issue row drives the gradient only while the pointer is
-      // actually within it — hovering elsewhere (e.g. a collapsed row
-      // further down) rests at the base color.
       if (el.hasAttribute('data-spot-gated') && distance > 0) continue;
       if (distance < nearestDistance) {
         nearestDistance = distance;
@@ -68,7 +59,6 @@
 
     let frame: number;
     function animate() {
-      // Color damping
       const colorDamping = 0.03;
       currentColor.r += (targetColor.r - currentColor.r) * colorDamping;
       currentColor.g += (targetColor.g - currentColor.g) * colorDamping;
@@ -79,16 +69,11 @@
     }
     frame = requestAnimationFrame(animate);
 
-    // Sync handler: pick the [data-spot-color] element nearest the user's
-    // current focus point — pointer Y if known, viewport center otherwise.
-    // Triggered by scroll, resize, and mousemove (all rAF-throttled).
     let scrollFrame: number | null = null;
     function sync() {
       if (scrollFrame !== null) return;
       scrollFrame = requestAnimationFrame(() => {
         scrollFrame = null;
-        // No eligible target (e.g. expanded-only mode with everything
-        // collapsed) → rest at the page's base color.
         setColor(findNearestSpotColor() || color || DEFAULT_HIGHLIGHT);
       });
     }
@@ -103,7 +88,6 @@
       sync();
     }
 
-    // Re-sync when an issue expands/collapses.
     function onIssueToggle() {
       sync();
     }

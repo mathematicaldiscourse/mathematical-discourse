@@ -6,8 +6,6 @@ import HoverHighlight from '../components/HoverHighlight.svelte';
 import MobileNav from '../components/MobileNav.svelte';
 import { fetchSiteSettings, fetchPrimaryNav, fetchFooterNav } from '../lib/wordpress';
 import '../styles/global.css';
-// Self-hosted KaTeX styles (bundled from the katex package, matching the render
-// version) so no visitor request goes to a third-party CDN.
 import 'katex/dist/katex.min.css';
 
 interface Props {
@@ -17,7 +15,6 @@ interface Props {
   spotColor?: string;
   spotVolume?: number;
   spotIssue?: number;
-  /** Yoast `yoast_head_json` for the current post, if any — overrides the defaults. */
   seo?: any;
 }
 
@@ -28,9 +25,6 @@ const fullTitle = title === 'Mathematical Discourse' ? title : `${title} | Mathe
 const canonicalUrl = `${siteBase}${Astro.url.pathname}`;
 const ogImageUrl = ogImage || `${siteBase}/og-default.png`;
 
-// Prefer Yoast's per-page SEO (yoast_head_json) when present; fall back to the
-// site defaults. Yoast's canonical/og_url are already frontend URLs because the
-// theme rewrites WordPress permalinks to the front end.
 const metaTitle = seo?.title || fullTitle;
 const metaDescription = seo?.description || description;
 const canonical = seo?.canonical || canonicalUrl;
@@ -74,7 +68,6 @@ const rssFeedUrl = `${siteBase}/feed/issues.xml`;
     <link rel="canonical" href={canonical} />
     {robots && <meta name="robots" content={robots} />}
 
-    <!-- Open Graph -->
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
@@ -82,18 +75,15 @@ const rssFeedUrl = `${siteBase}/feed/issues.xml`;
     <meta property="og:image" content={ogImageFinal} />
     <meta property="og:site_name" content="Mathematical Discourse" />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content={twitterCard} />
     <meta name="twitter:title" content={twitterTitle} />
     <meta name="twitter:description" content={twitterDescription} />
     <meta name="twitter:image" content={twitterImage} />
 
-    <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- RSS -->
     <link rel="alternate" type="application/rss+xml" title="Mathematical Discourse — Issues" href="/feed/issues.xml" />
 
     <title>{metaTitle}</title>
@@ -107,9 +97,7 @@ const rssFeedUrl = `${siteBase}/feed/issues.xml`;
     )}
     <HoverHighlight client:load />
 
-    <!-- Site Header -->
     <div class="sticky top-0 z-40 bg-off-white" id="site-header">
-      <!-- Desktop Nav -->
       <header class="hidden md:block border-t border-b border-black">
         <nav class="site-container flex items-center justify-between h-[50px] font-mono text-sm uppercase">
           <div class="flex items-center self-stretch">
@@ -124,21 +112,17 @@ const rssFeedUrl = `${siteBase}/feed/issues.xml`;
         </nav>
       </header>
 
-      <!-- Mobile Nav -->
       <MobileNav client:load navItems={navItems} />
     </div>
 
-    <!-- Main -->
     <main id="main-content" class="site-container">
       <slot />
     </main>
 
-    <!-- Footer -->
     <footer class="mt-24 md:mt-32 lg:mt-40">
       <div class="border-t border-black"></div>
 
       <div class="site-container flex flex-col md:grid md:grid-cols-3">
-        <!-- Nav links -->
         <div class="flex flex-col -mx-6 md:-mx-0 md:row-span-full md:border-r border-black md:-ml-10 2xl:border-l">
           {footerNavItems.map((item) => (
             <a
@@ -148,7 +132,6 @@ const rssFeedUrl = `${siteBase}/feed/issues.xml`;
           ))}
         </div>
 
-        <!-- Mobile footer -->
         <div class="md:hidden flex flex-col gap-8 py-8">
           <div class="flex flex-col gap-3">
             {settings.footer_links_heading && (
@@ -179,7 +162,6 @@ const rssFeedUrl = `${siteBase}/feed/issues.xml`;
           <p class="font-mono text-sm uppercase">&copy; {new Date().getFullYear()} {settings.footer_org_name || 'Mathematical Discourse'}</p>
         </div>
 
-        <!-- Desktop footer -->
         <div class="hidden md:flex flex-col justify-between gap-10 p-16 col-span-2">
           <div class="flex flex-col gap-3">
             <div class="flex flex-wrap items-center gap-x-12 gap-y-3">

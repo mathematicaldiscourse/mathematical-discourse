@@ -26,8 +26,6 @@
     const next = el.hidden;
     el.hidden = !next;
     window.dispatchEvent(new CustomEvent(eventName, { detail: { open: next } }));
-    // Generic event (un-namespaced) so listeners like SpotGradient can react
-    // to any issue expanding/collapsing without knowing target ids.
     window.dispatchEvent(new CustomEvent('md-issue-toggle', { detail: { open: next, targetId } }));
   }
 </script>

@@ -6,10 +6,6 @@ import { fetchTalkBySlug, fetchIssueBySlug, fetchTalks, fetchIssues, fetchTalksB
 export const prerender = true;
 
 export async function getStaticPaths() {
-  // A talk can belong to more than one issue, and its page lives at
-  // /issue/<issue>/<talk>. Generate a page for every issue a talk is in (using
-  // the same issue → talks source the issue pages link from), otherwise the
-  // non-primary issues' URLs 404.
   const issues = await fetchIssues();
   const perIssue = await Promise.all(
     issues.map(async (issue) => {
@@ -28,8 +24,6 @@ const [talk, issue] = await Promise.all([
   fetchIssueBySlug(issueSlug!),
 ]);
 
-// A talk URL is only valid under its issue — treat a missing issue as a 404
-// too, so downstream code can rely on `issue` being present.
 if (!talk || !issue) {
   return Astro.rewrite('/404');
 }

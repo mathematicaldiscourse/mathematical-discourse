@@ -1,9 +1,5 @@
 import { fetchCurrentIssue, fetchIssues, fetchTalksByIssue, fetchSiteSettings, fetchTalks } from './wordpress';
 
-// Prepare the supporting data a set of flexible-content blocks needs to render:
-// the current issue (for current_issue), all issues with talks (for issue_list),
-// expand settings, and the talk→issue map for link rewriting. Shared by the
-// static page route and the SSR preview route so they render identically.
 export async function preparePageData(blocks: any[]) {
   let currentIssueData: any = null;
   let allIssuesData: any[] = [];

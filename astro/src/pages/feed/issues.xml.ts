@@ -27,7 +27,6 @@ export const GET: APIRoute = async ({ site }) => {
       description += '<ul>';
       for (const talk of talks) {
         const speakers = talk.acf.speakers?.map((s) => s.name).join(', ');
-        // md/v1 endpoints return title as a plain string (TalkSummary)
         description += `<li><a href="${siteUrl}/issue/${issue.slug}/${talk.slug}">${escapeXml(talk.title)}</a>${speakers ? ', ' + escapeXml(speakers) : ''}</li>`;
       }
       description += '</ul>';

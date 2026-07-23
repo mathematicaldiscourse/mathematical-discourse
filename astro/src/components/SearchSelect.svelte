@@ -35,7 +35,6 @@
   }
 </script>
 
-<!-- Native select on mobile -->
 <label class="flex lg:hidden items-center gap-3 border-b-2 border-black py-2 font-mono text-base w-full">
   <span class="shrink-0">{label}:</span>
   <select
@@ -49,7 +48,6 @@
   </select>
 </label>
 
-<!-- Custom select on desktop -->
 <div class="relative hidden lg:block">
   <button
     {...select.trigger}

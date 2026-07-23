@@ -74,7 +74,6 @@
 </script>
 
 <div class="flex flex-col md:flex-row md:items-start gap-4 md:gap-0">
-  <!-- Tab buttons -->
   <div
     role="tablist"
     aria-label="Talk information"
@@ -96,7 +95,6 @@
     {/each}
   </div>
 
-  <!-- Content -->
   <div class="flex-1 md:ml-8">
     <div
       id="talk-panel-synopsis"

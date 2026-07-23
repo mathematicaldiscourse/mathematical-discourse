@@ -27,8 +27,6 @@ const {
 ---
 
 {blocks.map((block) => {
-  // Optional per-block anchor: lets other pages link straight to this block
-  // (e.g. /about#contact). scroll-mt keeps it clear of the sticky header.
   const anchorId = block.anchor
     ? String(block.anchor).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
     : '';
@@ -42,7 +40,6 @@ const {
       );
 
     case 'long_form_text': {
-      // Column is left-aligned by default; the "Center column" toggle adds mx-auto.
       const alignment = block.centered ? ' mx-auto' : '';
       return (
         <section class={`long-form-text mt-8 max-w-[710px]${alignment}`} set:html={rewriteContentLinks(optimizeImages(renderLatex(block.text || block.content || '')), talkIssueMap)} />

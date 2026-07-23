@@ -5,15 +5,7 @@
 
   let player: any = null;
   let playerReady = $state(false);
-  // Deterministic id (from the video id) so the server-rendered iframe and the
-  // hydrated component always agree on the element to attach to.
   const playerId = `yt-player-${videoId}`;
-  // enablejsapi=1 lets us attach the YouTube Player API to this iframe for the
-  // table-of-contents seek feature. The iframe is in the markup, so the video
-  // always loads even if that API is slow to load or fails.
-  // youtube-nocookie.com is YouTube's privacy-enhanced mode: it doesn't set
-  // tracking cookies until the visitor actually plays the video. The JS API
-  // still works because it reads this iframe's own domain to communicate.
   const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&modestbranding=1&rel=0`;
 
   function timestampToSeconds(ts: string): number {
@@ -38,8 +30,6 @@
   }
 
   onMount(() => {
-    // Attach the API to the iframe that's already in the page. This only powers
-    // the seek-to-timestamp feature; the video itself is the plain iframe below.
     function attachPlayer() {
       const el = document.getElementById(playerId);
       if (!el || !(window as any).YT?.Player) return;

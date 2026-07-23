@@ -6,8 +6,6 @@ import { fetchSearchIndex } from '../lib/wordpress';
 
 export const prerender = true;
 
-// Provide the index at build time so the island renders immediately — no
-// client-side fetch and no "Loading" gate that can get stuck on soft navigation.
 const entries = await fetchSearchIndex();
 ---
 

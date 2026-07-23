@@ -9,8 +9,6 @@ export const prerender = true;
 
 export async function getStaticPaths() {
   const [pages, settings] = await Promise.all([fetchPages(), fetchSiteSettings()]);
-  // The WordPress front page (Settings → Reading) renders at the root path.
-  // Fall back to a page with the slug "home" if no front page is configured.
   const frontPage = settings.front_page_id
     ? pages.find((p) => p.id === settings.front_page_id)
     : pages.find((p) => p.slug === 'home');
@@ -29,13 +27,11 @@ if (!page) {
 const blocks = page.acf?.content_blocks || [];
 const { currentIssueData, allIssuesData, issueSettings, talkIssueMap } = await preparePageData(blocks);
 
-// Determine spot color from current issue if present
 const spotColor = currentIssueData?.acf?.issue_color;
 const spotVolume = currentIssueData?.acf?.volume_number;
 const spotIssue = currentIssueData?.acf?.issue_number;
 const isHome = !slug || slug === 'home';
 
-// Use intro_text block as page description for SEO
 const introBlock = blocks.find((b) => b.acf_fc_layout === 'intro_text');
 const pageDescription = introBlock?.content?.replace(/<[^>]+>/g, '').trim() || undefined;
 

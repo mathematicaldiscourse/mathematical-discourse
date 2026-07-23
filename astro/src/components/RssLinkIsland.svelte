@@ -2,7 +2,6 @@
   interface Props {
     label: string;
     feedUrl: string;
-    /** Tailwind classes for the trigger button — lets the caller match surrounding link styling. */
     triggerClass?: string;
   }
 

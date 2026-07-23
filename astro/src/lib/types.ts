@@ -40,7 +40,6 @@ export interface TalkAcf {
   funding_information: string;
 }
 
-/** Talk as returned by the standard WP REST API (/wp/v2/talks). */
 export interface Talk {
   id: number;
   slug: string;
@@ -51,11 +50,6 @@ export interface Talk {
   talk_formats?: TaxonomyTerm[];
 }
 
-/**
- * Talk as returned by the custom md/v1 endpoints (current-issue,
- * talks-by-issue). Same shape except `title` is a plain string —
- * get_the_title(), not the wp/v2 { rendered } wrapper.
- */
 export interface TalkSummary extends Omit<Talk, 'title'> {
   title: string;
 }
@@ -69,19 +63,12 @@ export interface IssueAcf {
   is_current_issue: boolean;
 }
 
-/**
- * Issue as returned by /wp/v2/issues. NOTE: the issue CPT registers with
- * supports: ['revisions'] only, so wp/v2 responses have NO title field —
- * the admin-facing title is auto-generated from volume/issue numbers.
- * Display labels come from formatIssueLabel(volume, issue) instead.
- */
 export interface Issue {
   id: number;
   slug: string;
   acf: IssueAcf;
 }
 
-/** md/v1/current-issue — title here IS present (get_the_title, plain string). */
 export interface CurrentIssueResponse extends Issue {
   title: string;
   talks: TalkSummary[];
@@ -113,7 +100,6 @@ export interface EditorGroup {
   }[];
 }
 
-/** One entry of /md/v1/search-index — keep in sync with rest-api.php. */
 export interface SearchIndexEntry {
   id: number;
   slug: string;

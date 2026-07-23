@@ -15,7 +15,6 @@
   let copied = $state(false);
   let liveMessage = $state('');
 
-  // Strip any HTML/entities the WordPress title may carry.
   function cleanTitle(): string {
     return (title || '')
       .replace(/<[^>]+>/g, '')
@@ -41,7 +40,6 @@
     const lastName = firstSpeaker.trim().split(/\s+/).pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'talk';
     const citeKey = `${lastName}${year || ''}`;
     const authorStr = speakers.join(' and ');
-    // Double braces around the title preserve its capitalization in BibTeX.
     const pad = (k: string) => k.padEnd(9);
     const lines = [
       `@article{${citeKey},`,

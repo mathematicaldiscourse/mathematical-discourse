@@ -39,7 +39,6 @@ async function fetchAPI<T>(endpoint: string, params?: Record<string, string>): P
   return injectIssueColors(await res.json());
 }
 
-// Talks
 export async function fetchTalks(params?: Record<string, string>): Promise<Talk[]> {
   return fetchAPI<Talk[]>('/wp/v2/talks', { per_page: '100', ...params });
 }
@@ -49,7 +48,6 @@ export async function fetchTalkBySlug(slug: string): Promise<Talk | null> {
   const talk = talks[0] ?? null;
   if (!talk) return null;
 
-  // Hydrate taxonomy terms from _embedded data
   const embeddedTerms = talk._embedded?.['wp:term'] ?? [];
   const allTerms = embeddedTerms.flat();
   talk.subject_areas = allTerms.filter((t: any) => t.taxonomy === 'subject_area');
@@ -58,7 +56,6 @@ export async function fetchTalkBySlug(slug: string): Promise<Talk | null> {
   return talk as Talk;
 }
 
-// Issues
 export async function fetchIssues(): Promise<Issue[]> {
   return fetchAPI<Issue[]>('/wp/v2/issues', { per_page: '100', orderby: 'date', order: 'desc' });
 }
@@ -72,9 +69,6 @@ export async function fetchCurrentIssue(): Promise<CurrentIssueResponse | null> 
   try {
     return await fetchAPI<CurrentIssueResponse>('/md/v1/current-issue');
   } catch (err) {
-    // 404 is the legitimate "no issue is flagged current" state (e.g. at
-    // launch). Anything else — WP down, 500s — must fail the build loudly
-    // rather than silently snapshotting an incomplete site.
     if (err instanceof WordPressApiError && err.status === 404) {
       return null;
     }
@@ -82,17 +76,14 @@ export async function fetchCurrentIssue(): Promise<CurrentIssueResponse | null> 
   }
 }
 
-// Talks by issue
 export async function fetchTalksByIssue(issueId: number): Promise<TalkSummary[]> {
   return fetchAPI<TalkSummary[]>(`/md/v1/talks-by-issue/${issueId}`);
 }
 
-// People / Editors
 export async function fetchEditors(): Promise<EditorGroup[]> {
   return fetchAPI<EditorGroup[]>('/md/v1/editors');
 }
 
-// Taxonomies
 export async function fetchSubjectAreas(): Promise<TaxonomyTerm[]> {
   return fetchAPI<TaxonomyTerm[]>('/wp/v2/subject-areas', { per_page: '100' });
 }
@@ -101,7 +92,6 @@ export async function fetchTalkFormats(): Promise<TaxonomyTerm[]> {
   return fetchAPI<TaxonomyTerm[]>('/wp/v2/talk-formats', { per_page: '100' });
 }
 
-// Talks by taxonomy
 export async function fetchTalksBySubjectArea(termId: number): Promise<Talk[]> {
   return fetchAPI<Talk[]>('/wp/v2/talks', { 'subject-areas': String(termId), per_page: '100' });
 }
@@ -120,12 +110,10 @@ export async function fetchTalkFormatBySlug(slug: string): Promise<TaxonomyTerm 
   return terms[0] ?? null;
 }
 
-// Search index
 export async function fetchSearchIndex(): Promise<SearchIndexEntry[]> {
   return fetchAPI<SearchIndexEntry[]>('/md/v1/search-index');
 }
 
-// Pages
 export async function fetchPageBySlug(slug: string): Promise<Page | null> {
   const pages = await fetchAPI<Page[]>('/wp/v2/pages', { slug });
   return pages[0] ?? null;
@@ -143,8 +131,6 @@ export async function fetchPageById(id: number): Promise<Page | null> {
   }
 }
 
-// Resolve the home page from WordPress's front-page setting (Settings →
-// Reading → page_on_front), falling back to a page with the slug "home".
 export async function fetchFrontPage(): Promise<Page | null> {
   const settings = await fetchSiteSettings();
   if (settings.front_page_id) {
@@ -154,9 +140,6 @@ export async function fetchFrontPage(): Promise<Page | null> {
   return fetchPageBySlug('home');
 }
 
-// Fetch unpublished/draft content by ID, authenticated with the preview
-// Application Password. Server-side only (the SSR /preview route). Returns null
-// if credentials are missing or the request fails.
 async function fetchDraft<T>(restPath: string): Promise<T | null> {
   const user = import.meta.env.WP_PREVIEW_USER;
   const pass = import.meta.env.WP_PREVIEW_APP_PASSWORD;
@@ -172,7 +155,6 @@ export const fetchDraftPage = (id: number) => fetchDraft<Page>(`/wp/v2/pages/${i
 export const fetchDraftTalk = (id: number) => fetchDraft<Talk>(`/wp/v2/talks/${id}`);
 export const fetchDraftIssue = (id: number) => fetchDraft<any>(`/wp/v2/issues/${id}`);
 
-// Site settings
 export interface FooterFunder {
   name: string;
   url: string;
@@ -200,21 +182,16 @@ export interface SiteSettings {
   front_page_id: number;
 }
 
-// No fallback: builds are static snapshots, so a failed settings fetch must
-// fail the build — a silent default here would deploy a wrong site.
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   return fetchAPI<SiteSettings>('/md/v1/site-settings');
 }
 
-// Navigation
 export interface NavItem {
   id: number;
   title: string;
   url: string;
 }
 
-// No fallbacks (see fetchSiteSettings) — the endpoints themselves return []
-// with a 200 when no menu is assigned, which is the legitimate empty state.
 export async function fetchPrimaryNav(): Promise<NavItem[]> {
   return fetchAPI<NavItem[]>('/md/v1/nav/primary');
 }
