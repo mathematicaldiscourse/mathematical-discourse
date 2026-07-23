@@ -15,7 +15,7 @@ const wpUrl = WP_URL ? new URL(WP_URL) : null;
 export default defineConfig({
   // `site` drives every absolute URL (sitemap, RSS, OG, canonical). Point it at
   // the current production deployment. Swap to the real domain at go-live.
-  site: 'https://mathematical-discourse-sable.vercel.app',
+  site: 'https://www.mathematicaldiscourse.org',
   output: 'server',
   adapter: vercel({
     imageService: true,
