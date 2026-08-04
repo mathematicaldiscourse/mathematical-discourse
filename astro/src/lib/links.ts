@@ -19,6 +19,7 @@ function mapHref(href: string, talkIssueMap: Map<string, string>): string {
 
   if (WP_HOST && url.host !== WP_HOST) return href;
 
+  if (url.pathname.startsWith('/wp-content/uploads/')) return url.pathname + url.search;
   if (/^\/wp-(content|includes|admin)\//.test(url.pathname)) return url.href;
 
   const segments = url.pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
@@ -40,6 +41,17 @@ function mapHref(href: string, talkIssueMap: Map<string, string>): string {
     default:
       return segments.length === 1 ? `/${base}` : url.pathname;
   }
+}
+
+export function mediaPath(url: string): string {
+  if (!url) return url;
+  try {
+    const u = new URL(url, import.meta.env.WP_URL);
+    if (WP_HOST && u.host === WP_HOST && u.pathname.startsWith('/wp-content/uploads/')) {
+      return u.pathname + u.search;
+    }
+  } catch { /* not a URL — leave as-is */ }
+  return url;
 }
 
 export function rewriteContentLinks(html: string, talkIssueMap: Map<string, string>): string {

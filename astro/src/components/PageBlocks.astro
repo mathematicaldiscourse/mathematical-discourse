@@ -6,7 +6,7 @@ import DotDivider from './DotDivider.astro';
 import Button from './Button.astro';
 import { renderLatex } from '../lib/katex';
 import { optimizeImages } from '../lib/images';
-import { rewriteContentLinks } from '../lib/links';
+import { rewriteContentLinks, mediaPath } from '../lib/links';
 import { groupByVolume, formatVolumeHeading } from '../lib/utils';
 
 interface Props {
@@ -241,7 +241,7 @@ const {
               const pageSlug = btn.page?.post_name || btn.page?.slug;
               const href =
                 btn.link_type === 'email' ? `mailto:${btn.email}` :
-                btn.link_type === 'file'  ? btn.file :
+                btn.link_type === 'file'  ? mediaPath(btn.file) :
                 btn.link_type === 'page'  ? (pageSlug ? `/${pageSlug}` : '') :
                 btn.url;
               const isDownload = btn.link_type === 'file';
