@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/wp-content/uploads/:path*",
-      "destination": "https://dev-mathematicaldiscourse.pantheonsite.io/wp-content/uploads/:path*"
+      "destination": "https://live-mathematicaldiscourse.pantheonsite.io/wp-content/uploads/:path*"
     }
   ]
 }
