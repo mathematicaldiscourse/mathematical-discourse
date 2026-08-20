@@ -12,8 +12,12 @@ export const GET: APIRoute = async ({ params, request }) => {
     headers: { Accept: '*/*', 'User-Agent': 'md-media-proxy' },
   });
 
+  // `content-length`/`etag` are deliberately omitted: `fetch` negotiates gzip with
+  // WordPress and transparently decompresses the body, so those headers describe the
+  // compressed representation and would truncate text uploads (.tex, .svg, .csv) at
+  // the compressed length. Binary uploads were unaffected only because they aren't gzipped.
   const headers = new Headers();
-  for (const h of ['content-type', 'content-length', 'last-modified', 'etag', 'content-disposition']) {
+  for (const h of ['content-type', 'last-modified', 'content-disposition']) {
     const v = upstream.headers.get(h);
     if (v) headers.set(h, v);
   }
