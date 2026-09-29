@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Talk Feedback Form</title>
+<!-- PDF generation library (MIT), pinned version, integrity-checked -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"
+        integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3"
+        crossorigin="anonymous" defer></script>
+<style>
+  :root {
+    --green: #1A5C38;
+    --blue: #3C64A0;
+    --box-bg: #F5F8FC;
+    --box-edge: #B4C8E6;
+    --rating-bg: #EBF2FC;
+    --ink: #1a1a1a;
+    --muted: #555;
+    --page: #ffffff;
+    --backdrop: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--backdrop);
+    color: var(--ink);
+    font: 16px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 36px 120px;
+    background: var(--page);
+    min-height: 100vh;
+  }
+  h1 {
+    color: var(--green);
+    font-size: 2rem;
+    line-height: 1.15;
+    margin: 0;
+    text-align: center;
+  }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    margin: 4px 0 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--green);
+  }
+  h2 {
+    background: var(--green);
+    color: #fff;
+    font-size: 1.15rem;
+    margin: 40px 0 10px;
+    padding: 8px 12px;
+  }
+  h3 {
+    color: var(--blue);
+    font-size: 1.05rem;
+    margin: 28px 0 8px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--blue);
+  }
+  p { margin: 0 0 10px; }
+  .note, .hint {
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9em;
+  }
+  .q { margin: 16px 0 0; }
+  .q > label, .q > .label { display: block; margin-bottom: 2px; }
+  .q .hint { display: block; margin: 0 0 4px; }
+  textarea {
+    display: block;
+    width: 100%;
+    min-height: 5.5em;
+    margin-top: 4px;
+    padding: 8px 10px;
+    font: inherit;
+    color: inherit;
+    background: var(--box-bg);
+    border: 1px solid var(--box-edge);
+    border-radius: 2px;
+    resize: vertical;
+    overflow: hidden;
+  }
+  textarea.tall { min-height: 9em; }
+  textarea.huge { min-height: 22em; }
+  textarea:focus-visible, input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+  fieldset {
+    border: 1px solid var(--box-edge);
+    background: var(--rating-bg);
+    border-radius: 4px;
+    margin: 6px 0 0;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+  fieldset legend {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  }
+  fieldset label { display: inline-flex; align-items: center; gap: 5px; font-size: 0.88em; cursor: pointer; white-space: nowrap; }
+  input[type=radio] { width: 16px; height: 16px; margin: 0; accent-color: var(--blue); }
+  .usage {
+    border-left: 4px solid var(--blue);
+    background: var(--box-bg);
+    padding: 10px 14px;
+    margin: 24px 0 0;
+    font-size: 0.95rem;
+  }
+  .usage p:last-child { margin-bottom: 0; }
+  .usage a { color: var(--blue); overflow-wrap: anywhere; }
+
+  /* action bar */
+  .actions {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.97);
+    border-top: 1px solid #d5dbe2;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 14px;
+    z-index: 10;
+  }
+  .actions button {
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid var(--green);
+    background: #fff;
+    color: var(--green);
+    cursor: pointer;
+  }
+  .actions button.primary { background: var(--green); color: #fff; }
+  .actions button.quiet { border-color: #aab; color: #555; }
+  #status { color: var(--muted); font-size: 0.85rem; min-width: 12em; text-align: center; }
+  .print-text { display: none; }
+
+  @media (max-width: 600px) {
+    main { padding: 20px 16px 150px; }
+    h1 { font-size: 1.6rem; }
+    fieldset { flex-direction: column; }
+  }
+
+  /* ---------- print / Save as PDF ---------- */
+  @media print {
+    @page { size: letter; margin: 0.75in; }
+    body { background: #fff; font-size: 10.5pt; }
+    main { max-width: none; padding: 0; min-height: 0; }
+    .actions, .usage { display: none !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    textarea { display: none; }
+    .print-text {
+      display: block;
+      white-space: pre-wrap;
+      background: var(--box-bg);
+      border: 1px solid var(--box-edge);
+      padding: 6px 9px;
+      margin-top: 4px;
+      min-height: 3em;
+    }
+    h2.new-page { break-before: page; }
+    h2, h3, .q > label, .q > .label { break-after: avoid; }
+    fieldset { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+<form id="form" autocomplete="off">
+
+<h1>Talk Feedback Form</h1>
+<p class="subtitle">Mathematical Discourse</p>
+
+<h2>Instructions to referees</h2>
+<p>We ask you to use the following form to structure your feedback on the talk. This will help the editors and scientific board in evaluating submissions fairly, and will help the author to understand in some detail how an audience member experiences the talk. Please keep in mind that each talk is submitted as either a seminar talk in the specified subject area, or as a math colloquium, and should be appropriate for such a setting.</p>
+<p>Part I asks you to (very briefly) summarize the talk.</p>
+<p>Part II has several detailed questions analyzing the talk along different axes, concluding with your main take-aways and your overall opinion. Unlike the other parts, this will not be shared with the speaker, although the editor may paraphrase portions of it in their report. In some cases (such as a talk not at a level viable for publication) it may be appropriate to skip many questions and go to the “Overall rating” at the end of this Part.</p>
+<p>Part III asks you to select comments from Part II that can be shared with the speaker.</p>
+<p>Part IV asks for comments on written materials submitted with the talk and should be filled only if you have a strongly positive opinion of the talk.</p>
+<p>The mission of <em>Mathematical Discourse</em> is to recognize and reward the work of giving an excellent talk, and thereby to promote a culture which values communication as part of the research process. If we succeed, it will only be because of the care and time and thought put in by referees like yourself. Thank you for all your effort.</p>
+
+<div class="usage">
+  <p>Your answers are not saved automatically, so if you close or reload this page, your answers will be lost. If you wish to prepare your answers offline, a list of questions is available at <a href="https://drive.google.com/file/d/17GqsbOyz6HM_je_pYle9JwTcgauYiw3n/view?usp=drive_link" target="_blank" rel="noopener">https://drive.google.com/file/d/17GqsbOyz6HM_je_pYle9JwTcgauYiw3n/view?usp=drive_link</a>.</p>
+  <p>When you’re finished, click <strong>Save as PDF</strong> at the bottom of the page and upload the PDF to Editflow.</p>
+</div>
+
+<!-- ================= PART I ================= -->
+<h2 class="new-page">Part I — Summary</h2>
+<p class="note">Please answer these questions without referring to the abstract.</p>
+
+<h3>What is this talk about?</h3>
+<div class="q">
+  <label for="q1_content">Summarize in 1–3 sentences the main mathematical content of the talk.</label>
+  <textarea id="q1_content" name="q1_content"></textarea>
+</div>
+
+<h3>Why is this topic worth hearing about?</h3>
+<div class="q">
+  <label for="q2_interest">Summarize in 1–3 sentences the main reasons the talk gave you to be interested in this topic.</label>
+  <textarea id="q2_interest" name="q2_interest"></textarea>
+</div>
+
+<!-- ================= PART II ================= -->
+<h2 class="new-page">Part II — Evaluation and reflection (shared only with editors)</h2>
+<p class="note">The following questions ask you first to describe, then evaluate, the talk along various axes.</p>
+
+<h3>Motivation and Context</h3>
+<div class="q">
+  <label for="q3_motivation">How did the speaker attempt to engage you with the material?</label>
+  <textarea id="q3_motivation" name="q3_motivation" class="tall"></textarea>
+</div>
+<div class="q">
+  <span class="label" id="q3_rating_l">How effective did you find the motivation and contextualization?</span>
+  <fieldset data-rating="q3_rating" aria-labelledby="q3_rating_l"></fieldset>
+</div>
+
+<h3>Conceptual Accessibility and Audience Appropriateness</h3>
+<div class="q">
+  <label for="q4_accessibility">Describe what was done to make potentially unfamiliar concepts concrete and accessible, and how effective this was.</label>
+  <span class="hint">You might consider: worked examples, analogies, heuristics, return to a common theme…</span>
+  <textarea id="q4_accessibility" name="q4_accessibility" class="tall"></textarea>
+</div>
+<div class="q">
+  <label for="q4_background">In your opinion, what background knowledge did the talk assume?</label>
+  <textarea id="q4_background" name="q4_background"></textarea>
+</div>
+<div class="q">
+  <label for="q4_audience">How appropriate do you feel this talk is for a colloquium or department seminar, as indicated by the speaker?</label>
+  <span class="hint">Refer to the submission form to see the speaker’s intended audience.</span>
+  <textarea id="q4_audience" name="q4_audience"></textarea>
+</div>
+
+<h3>Organization and Coherence</h3>
+<div class="q">
+  <label for="q5_outline">Give a short outline of the talk, and comment on what made this structure reasonable or on any components that felt out of place.</label>
+  <span class="hint">You may outline with bullet points, a paragraph, or another format.</span>
+  <textarea id="q5_outline" name="q5_outline" class="tall"></textarea>
+</div>
+<div class="q">
+  <label for="q5_thread">Were there points at which you lost the thread for a significant period? If so, give a time stamp and comments.</label>
+  <textarea id="q5_thread" name="q5_thread"></textarea>
+</div>
+<div class="q">
+  <span class="label" id="q5_rating_l">Rating (global clarity and coherence):</span>
+  <fieldset data-rating="q5_rating" aria-labelledby="q5_rating_l"></fieldset>
+</div>
+
+<h3>Local Mathematical Clarity</h3>
+<div class="q">
+  <label for="q6_clarity">Comment on how easy it was to follow any given 5–10 minute segment.</label>
+  <span class="hint">You might consider: precision and clarity of definitions/statements, assumptions vs conclusions, delineating between rigor and intuition… did the level of local clarity change throughout the talk? Was it clear which parts are original work of the speaker, and if attributions were given, were they appropriate?</span>
+  <textarea id="q6_clarity" name="q6_clarity" class="tall"></textarea>
+</div>
+<div class="q">
+  <label for="q6_errors">Were there any mathematical errors or inaccuracies that impacted your understanding of the talk? If so, please describe and give a timestamp. How serious were these?</label>
+  <textarea id="q6_errors" name="q6_errors"></textarea>
+</div>
+<div class="q">
+  <span class="label" id="q6_rating_l">Rating (overall local mathematical clarity):</span>
+  <fieldset data-rating="q6_rating" aria-labelledby="q6_rating_l"></fieldset>
+</div>
+
+<h3>Visuals</h3>
+<div class="q">
+  <label for="q7_visuals">Comment on the visual aspects of this talk.</label>
+  <span class="hint">You might consider: board or slide layout, specific images used, quantity of text… What visual aspects were most enlightening? Were any distracting or confusing?</span>
+  <textarea id="q7_visuals" name="q7_visuals" class="tall"></textarea>
+</div>
+<div class="q">
+  <span class="label" id="q7_rating_l">Rating (effectiveness of visuals):</span>
+  <fieldset data-rating="q7_rating" aria-labelledby="q7_rating_l"></fieldset>
+</div>
+
+<h3>Pacing</h3>
+<div class="q">
+  <label for="q8_pacing">Describe the pace of the talk, considering both words (written and oral) per minute and ideas per minute. Did the pace change significantly over the course of the talk?</label>
+  <textarea id="q8_pacing" name="q8_pacing" class="tall"></textarea>
+</div>
+<div class="q">
+  <span class="label" id="q8_rating_l">Rating (effectiveness of pacing):</span>
+  <fieldset data-rating="q8_rating" aria-labelledby="q8_rating_l"></fieldset>
+</div>
+
+<h3>Main Takeaways</h3>
+<div class="q">
+  <label for="q9_takeaways">Give the one (or two) biggest mathematical takeaways that you personally got from this talk.</label>
+  <span class="hint">This is a personal question — your takeaway might not coincide with the biggest theorem of the talk.</span>
+  <textarea id="q9_takeaways" name="q9_takeaways" class="tall"></textarea>
+</div>
+<div class="q">
+  <span class="label" id="q9_rating_l">How valuable are these takeaways to you? How mathematically stimulating did you personally find this talk?</span>
+  <fieldset data-rating="q9_rating" aria-labelledby="q9_rating_l"></fieldset>
+</div>
+
+<h3>Overall Rating</h3>
+<div class="q">
+  <span class="label" id="q10_rating_l">Give this talk an overall rating:</span>
+  <fieldset data-rating="q10_rating" aria-labelledby="q10_rating_l"></fieldset>
+</div>
+<div class="q">
+  <label for="q10_explanation">Explain your rating. You do not have to use the criteria above — use this space to explain what criteria you are using and how the talk excelled, met expectations, or could use improvement.</label>
+  <textarea id="q10_explanation" name="q10_explanation" class="tall"></textarea>
+</div>
+<div class="q">
+  <label for="q10_editor_comments">Any other comments for the editors?</label>
+  <textarea id="q10_editor_comments" name="q10_editor_comments" class="tall"></textarea>
+</div>
+
+<!-- ================= PART III ================= -->
+<h2 class="new-page">Part III — Comments for the Speaker</h2>
+<div class="q">
+  <label for="q11_speaker">Please synthesize the most salient points in your evaluation to the editors in a form that can be shared with the speakers. Feel free to copy/paste text from your report to the editors.</label>
+  <textarea id="q11_speaker" name="q11_speaker" class="huge"></textarea>
+</div>
+
+<!-- ================= PART IV ================= -->
+<h2 class="new-page">Part IV — Written materials (to be shared with the speaker)</h2>
+<p class="note">Answer these questions only if you have a strongly positive view of the talk AND you have suggestions for modification of the abstract, table of contents, and talk notes submitted by the speaker.</p>
+<div class="q">
+  <label for="q13_abstract">1. Do you have any suggestions to make the abstract more accessible and interesting to the selected audience (either colloquium or seminar)? The abstract should describe the content of the talk.</label>
+  <span class="hint">You might consider use of technical words and content that should be added or removed.</span>
+  <textarea id="q13_abstract" name="q13_abstract"></textarea>
+</div>
+<div class="q">
+  <label for="q14_toc">2. Do you have any suggestions to make the table of contents more useful?</label>
+  <span class="hint">You might consider marking key examples or analogies as well as sections of the talk.</span>
+  <textarea id="q14_toc" name="q14_toc"></textarea>
+</div>
+<div class="q">
+  <label for="q15_keywords">3. Do you have any suggestions to make the keywords more helpful for searches?</label>
+  <span class="hint">You might consider technical words featuring prominently in the talk, including synonyms not used by the speaker, or more accurate descriptions of the subject area than what is captured by the area tags.</span>
+  <textarea id="q15_keywords" name="q15_keywords"></textarea>
+</div>
+<div class="q">
+  <label for="q16_notes">4. Do you have any comments on the talk notes submitted by the author?</label>
+  <textarea id="q16_notes" name="q16_notes"></textarea>
+</div>
+
+</form>
+</main>
+
+<div class="actions" role="region" aria-label="Save your report">
+  <button type="button" class="primary" id="btn-pdf">Save as PDF</button>
+  <button type="button" class="quiet" id="btn-clear">Clear form</button>
+  <span id="status" aria-live="polite"></span>
+</div>
+
+<script>
+(function () {
+  var OPTIONS = ["Below average", "Average", "Above average", "Very good",
+                 "Among the best I have seen"];
+  var KEY = "md-talk-feedback-v1";
+  var form = document.getElementById("form");
+  var status = document.getElementById("status");
+
+  // Build the five-option rating rows (one choice per row).
+  document.querySelectorAll("fieldset[data-rating]").forEach(function (fs) {
+    var name = fs.getAttribute("data-rating");
+    var legend = document.createElement("legend");
+    legend.textContent = document.getElementById(name + "_l").textContent;
+    fs.appendChild(legend);
+    OPTIONS.forEach(function (opt, i) {
+      var id = name + "_" + i;
+      var lab = document.createElement("label");
+      lab.setAttribute("for", id);
+      var input = document.createElement("input");
+      input.type = "radio"; input.name = name; input.id = id; input.value = opt;
+      lab.appendChild(input);
+      lab.appendChild(document.createTextNode(opt));
+      fs.appendChild(lab);
+    });
+  });
+
+  // Each textarea gets a hidden mirror used only when printing,
+  // because browsers clip overflowing textareas in print.
+  var areas = Array.prototype.slice.call(form.querySelectorAll("textarea"));
+  areas.forEach(function (ta) {
+    var mirror = document.createElement("div");
+    mirror.className = "print-text";
+    ta.parentNode.insertBefore(mirror, ta.nextSibling);
+    ta._mirror = mirror;
+  });
+
+  function grow(ta) {
+    ta.style.height = "auto";
+    ta.style.height = (ta.scrollHeight + 2) + "px";
+  }
+  function syncMirror(ta) { ta._mirror.textContent = ta.value; }
+
+  // Autosave is intentionally OFF: nothing is stored in the browser.
+  // Remove any draft left behind by an earlier version of this page.
+  try { localStorage.removeItem(KEY); } catch (e) {}
+
+  areas.forEach(function (ta) { grow(ta); syncMirror(ta); });
+  form.addEventListener("input", function (e) {
+    if (e.target.tagName === "TEXTAREA") { grow(e.target); syncMirror(e.target); }
+  });
+  window.addEventListener("resize", function () { areas.forEach(grow); });
+
+  // Keep the print stylesheet working for anyone who prints (Ctrl/Cmd+P).
+  window.addEventListener("beforeprint", function () { areas.forEach(syncMirror); });
+
+  // ---- Save as PDF: built in the page with jsPDF, downloaded directly ----
+  // DejaVu Sans is used so that accented names (Erdős, Łojasiewicz, Čech)
+  // and common math symbols (ε, ∞, ≤, ∑) come out correctly.
+  var CDN = "https://cdn.jsdelivr.net/npm/";
+  var FONTS = [
+    { url: CDN + "dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+      sri: "sha384-WWCI8RVJmiZvis8EpwnSyGn7cTtzGfshxkxsg5ZuL9AUFpzKg99zhn/2lkFh2+vG" },
+    { url: CDN + "dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf",
+      sri: "sha384-NaVuSXCZeye4QyXzNedGU5Jz3B9xbAydt90g8TJAfHeosmQCXUNytQnYH5ZzJgKv" }
+  ];
+  function toBase64(buf) {
+    var bytes = new Uint8Array(buf), bin = "", CH = 0x8000;
+    for (var i = 0; i < bytes.length; i += CH)
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(bin);
+  }
+  function fetchFont(f) {
+    return fetch(f.url, { integrity: f.sri, mode: "cors" })
+      .then(function (r) { if (!r.ok) throw new Error("font " + r.status); return r.arrayBuffer(); })
+      .then(toBase64);
+  }
+  var fontPromise = null;
+  function loadFonts() {
+    if (!fontPromise) {
+      fontPromise = Promise.all(FONTS.map(fetchFont));
+      fontPromise.catch(function () { fontPromise = null; });   // allow a retry
+    }
+    return fontPromise;
+  }
+  // Fetch the fonts in the background now, so saving still works if the
+  // connection drops while the referee is writing.
+  loadFonts().catch(function () {});
+
+  function buildPdf(fonts) {
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "letter" });
+    doc.addFileToVFS("DejaVuSans.ttf", fonts[0]);
+    doc.addFont("DejaVuSans.ttf", "DejaVu", "normal");
+    doc.addFileToVFS("DejaVuSans-Bold.ttf", fonts[1]);
+    doc.addFont("DejaVuSans-Bold.ttf", "DejaVu", "bold");
+
+    var PW = 612, M = 54, W = PW - 2 * M, TOP = 58, BOTTOM = 738;
+    var GREEN = [26, 92, 56], BLUE = [60, 100, 160], INK = [26, 26, 26],
+        GRAY = [95, 95, 95], LGRAY = [150, 150, 150], WHITE = [255, 255, 255],
+        BOXBG = [245, 248, 252], EDGE = [180, 200, 230], RATEBG = [235, 242, 252];
+    var y = TOP;
+
+    function fill(c) { doc.setFillColor(c[0], c[1], c[2]); }
+    function draw(c, w) { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(w); }
+    function font(style, size, c) {
+      doc.setFont("DejaVu", style); doc.setFontSize(size);
+      doc.setTextColor(c[0], c[1], c[2]);
+    }
+    function newPage() { doc.addPage(); y = TOP; }
+    function ensure(h) { if (y + h > BOTTOM) newPage(); }
+    function split(text, width) { return doc.splitTextToSize(text, width); }
+    function clean(s) { return s.replace(/\s+/g, " ").trim(); }
+    function para(text, style, size, c, gapAfter) {
+      font(style, size, c);
+      var lh = size * 1.3;
+      split(text, W).forEach(function (ln) {
+        ensure(lh); doc.text(ln, M, y, { baseline: "top" }); y += lh;
+      });
+      y += gapAfter;
+    }
+    function banner(text, startPage) {
+      if (startPage && y > TOP) newPage();
+      font("bold", 12, WHITE);
+      var ls = split(text, W - 20), h = ls.length * 15 + 10;
+      ensure(h + 60);
+      fill(GREEN); doc.rect(M, y, W, h, "F");
+      font("bold", 12, WHITE);
+      ls.forEach(function (ln, i) { doc.text(ln, M + 10, y + 5 + i * 15, { baseline: "top" }); });
+      y += h + 8;
+    }
+    function section(text) {
+      y += 10;
+      font("bold", 11, BLUE);
+      var ls = split(text, W);
+      ensure(ls.length * 14 + 60);
+      ls.forEach(function (ln) { doc.text(ln, M, y, { baseline: "top" }); y += 14; });
+      y += 1; draw(BLUE, 0.5); doc.line(M, y, M + W, y); y += 6;
+    }
+    function answer(value) {
+      var pad = 6, lh = 13;
+      font("normal", 10, INK);
+      var text = value.replace(/\r\n?/g, "\n").replace(/\t/g, "    ").replace(/\s+$/, "");
+      var ls = [];
+      if (text) text.split("\n").forEach(function (p) {
+        if (p.trim() === "") ls.push(""); else ls = ls.concat(split(p, W - 2 * pad));
+      });
+      if (!ls.length) ls = [""];
+      while (ls.length) {
+        var fit = Math.floor((BOTTOM - y - 2 * pad) / lh);
+        if (fit < 1 || (fit < 2 && ls.length > 1)) { newPage(); continue; }
+        var take = ls.splice(0, fit), h = take.length * lh + 2 * pad;
+        fill(BOXBG); draw(EDGE, 0.6); doc.rect(M, y, W, h, "FD");
+        font("normal", 10, INK);
+        take.forEach(function (ln, i) {
+          if (ln) doc.text(ln, M + pad, y + pad + i * lh, { baseline: "top" });
+        });
+        y += h;
+        if (ls.length) newPage();
+      }
+      y += 10;
+    }
+    function rating(picked) {
+      var size = 8.5, r = 3.6, gapIn = 4, gapOut = 14, pad = 8, rowH = 17;
+      var items = OPTIONS.map(function (o) {
+        font(o === picked ? "bold" : "normal", size, INK);
+        return { t: o, w: 2 * r + gapIn + doc.getTextWidth(o) };
+      });
+      var rows = [[]], rw = 0, maxw = W - 2 * pad;
+      items.forEach(function (it) {
+        var row = rows[rows.length - 1];
+        if (row.length && rw + gapOut + it.w > maxw) { rows.push([]); row = rows[rows.length - 1]; rw = 0; }
+        rw += (row.length ? gapOut : 0) + it.w; row.push(it);
+      });
+      var h = rows.length * rowH + 4;
+      ensure(h + 10);
+      fill(RATEBG); draw(EDGE, 0.5); doc.roundedRect(M, y, W, h, 3, 3, "FD");
+      rows.forEach(function (row, ri) {
+        var x = M + pad, cy = y + 2 + ri * rowH + rowH / 2;
+        row.forEach(function (it) {
+          var sel = it.t === picked;
+          fill(WHITE); draw(BLUE, 0.7); doc.circle(x + r, cy, r, "FD");
+          if (sel) { fill(BLUE); doc.circle(x + r, cy, r - 1.7, "F"); }
+          font(sel ? "bold" : "normal", size, INK);
+          doc.text(it.t, x + 2 * r + gapIn, cy, { baseline: "middle" });
+          x += it.w + gapOut;
+        });
+      });
+      y += h + 10;
+    }
+
+    Array.prototype.forEach.call(form.children, function (el) {
+      var cls = el.classList;
+      if (el.tagName === "H1") {
+        font("bold", 20, GREEN);
+        doc.text(clean(el.textContent), PW / 2, y, { align: "center", baseline: "top" });
+        y += 26;
+      } else if (cls.contains("subtitle")) {
+        font("normal", 10, LGRAY);
+        doc.text(clean(el.textContent), PW / 2, y, { align: "center", baseline: "top" });
+        y += 16; draw(GREEN, 1.2); doc.line(M, y, M + W, y); y += 14;
+      } else if (el.tagName === "H2") {
+        banner(clean(el.textContent), cls.contains("new-page"));
+      } else if (el.tagName === "H3") {
+        section(clean(el.textContent));
+      } else if (el.tagName === "P") {
+        var isNote = cls.contains("note");
+        para(clean(el.textContent), "normal", isNote ? 9 : 10, isNote ? GRAY : INK, isNote ? 4 : 7);
+      } else if (cls.contains("q")) {
+        var lab = el.querySelector("label[for], .label"), hint = el.querySelector(".hint");
+        font("normal", 10, INK);
+        ensure(split(clean(lab.textContent), W).length * 13 + (hint ? 26 : 0) + 34);
+        y += 4;
+        para(clean(lab.textContent), "normal", 10, INK, 1);
+        if (hint) para(clean(hint.textContent), "normal", 8.5, GRAY, 2);
+        var ta = el.querySelector("textarea"), fs = el.querySelector("fieldset");
+        if (ta) answer(ta.value);
+        else if (fs) { var pk = fs.querySelector("input:checked"); rating(pk ? pk.value : null); }
+      }
+      // div.usage is on-screen help only and is left out of the PDF.
+    });
+
+    var n = doc.getNumberOfPages();
+    for (var i = 1; i <= n; i++) {
+      doc.setPage(i);
+      font("normal", 7.5, LGRAY);
+      if (i > 1) doc.text("Talk Feedback Form \u2022 Mathematical Discourse", M + W, 34,
+                          { align: "right", baseline: "top" });
+      doc.text("Page " + i + " of " + n, PW / 2, 758, { align: "center", baseline: "top" });
+    }
+    return doc;
+  }
+
+  function fallbackPrint() {
+    status.textContent = "Couldn\u2019t create the PDF directly. In the print dialog, choose \u201cSave as PDF\u201d.";
+    window.print();
+  }
+  var btnPdf = document.getElementById("btn-pdf");
+  btnPdf.addEventListener("click", function () {
+    areas.forEach(syncMirror);
+    if (!window.jspdf || !window.jspdf.jsPDF) { fallbackPrint(); return; }
+    btnPdf.disabled = true;
+    status.textContent = "Preparing PDF\u2026";
+    loadFonts().then(function (fonts) {
+      buildPdf(fonts).save("talk_feedback.pdf");
+      status.textContent = "PDF saved to your downloads";
+    }).catch(function (e) {
+      if (window.console) console.error(e);
+      fallbackPrint();
+    }).then(function () { btnPdf.disabled = false; });
+  });
+
+  // ---- Clear ----
+  document.getElementById("btn-clear").addEventListener("click", function () {
+    if (!confirm("Clear every answer on this form? This cannot be undone.")) return;
+    form.reset();
+    areas.forEach(function (ta) { grow(ta); syncMirror(ta); });
+    status.textContent = "Form cleared";
+  });
+})();
+</script>
+</body>
+</html>
